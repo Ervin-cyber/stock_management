@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  VIEWER
+}
+
+enum MovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+
+model User {
+  id                      String          @id @default(uuid())
+  email                   String          @unique
+  password                String      
+  name                    String?     
+  role                    Role      
+  active                  Boolean         @default(true)
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
+}         
+
+model Product {
+  id                      String          @id @default(uuid())
+  sku                     String          @unique
+  name                    String      
+  active                  Boolean         @default(true)
+
+  stocks                  Stock[]
+  movements               StockMovement[]
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
+}   
+
+model Warehouse {   
+  id                      String          @id @default(uuid())
+  name                    String      
+  active                  Boolean         @default(true)
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
+
+  stocks                  Stock[]
+  sourceMovements         StockMovement[] @relation("SourceMovements")
+  destinationMovements    StockMovement[] @relation("DestinationMovements")
+}   
+
+model Stock {
+  id                      String          @id @default(uuid())
+  warehouseId             String          
+  productId               String      
+  stockQuantity           Int         
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
+
+  warehouse               Warehouse       @relation(fields: [warehouseId], references: [id])
+  product                 Product         @relation(fields: [productId], references: [id])
+
+  @@unique([warehouseId, productId])
+}
+
+model StockMovement {
+  id                      String          @id @default(uuid())
+  productId               String  
+  movementType            MovementType  
+  sourceWarehouseId       String? 
+  destinationWarehouseId  String? 
+  stockQuantity           Int 
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
+
+  sourceWarehouse         Warehouse?      @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
+  destinationWarehouse    Warehouse?      @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])
+  product                 Product         @relation(fields: [productId], references: [id])
+}

@@ -27,6 +27,7 @@ export default async function authRoutes(app: FastifyInstance) {
         }
 
         const token = app.jwt.sign({
+            id: user.id,
             email: user.email,
             role: user.role,
         }, { expiresIn: '1d' }); // jwt expiration 1 day
@@ -41,6 +42,32 @@ export default async function authRoutes(app: FastifyInstance) {
             }
         });
     });
+
+    app.get('/me', {
+        onRequest: [app.authenticate as any]
+    }, async (request, reply) => {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: request.user.id },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    role: true,
+                    createdAt: true
+                }
+            });
+
+            if (!user) {
+                return reply.status(404).send({ success: false, error: 'Felhasználó nem található!' });
+            }
+
+            return reply.send({ success: true, user });
+        } catch (error) {
+            throw error;
+        }
+    });
+
     app.get('/test-db', async (request, reply) => {
         try {
             const warehouses = await prisma.warehouse.findMany();

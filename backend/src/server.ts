@@ -1,12 +1,11 @@
 import * as dotenv from 'dotenv';
 import authPlugin from './plugins/auth';
 import errorHandler from './plugins/errorHandler'
-import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 import Fastify from 'fastify';
 import prisma from './lib/prisma';
-import authRoutes from './routes/auth.route';
+import authRoutes from './routes/auth.routes';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
@@ -17,10 +16,6 @@ app.register(authRoutes, { prefix: '/api/auth' });
 
 app.get('/health', async (request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() })
-});
-
-app.get('/api/protected', { onRequest: [async (req, rep) => app.authenticate(req, rep)] }, async (req) => {
-    return req.user;
 });
 
 const start = async () => {

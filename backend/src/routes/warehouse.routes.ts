@@ -41,7 +41,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to update a warehouse.' });
         }
 
-        const { id } = request.params as { id: string };
+        const { id } = request.params as { id: string } ?? {};
         const { name, location } = request.body as any ?? {};
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
@@ -69,7 +69,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to delete a warehouse.' });
         }
 
-        const { id } = request.params as { id: string };
+        const { id } = request.params as { id: string } ?? {};
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing) {

@@ -7,6 +7,7 @@ import Fastify from 'fastify';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
 import warehouseRoutes from './routes/warehouse.routes';
+import productRoutes from './routes/product.routes';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
@@ -14,6 +15,7 @@ app.register(authPlugin);
 app.register(errorHandler)
 
 app.register(authRoutes, { prefix: '/api/auth' });
+app.register(productRoutes, { prefix: 'api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
 
 app.get('/health', async (request, reply) => {

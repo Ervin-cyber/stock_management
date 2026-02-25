@@ -1,10 +1,15 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
-
+interface LoginBody {
+    email?: string;
+    password?: string;
+}
 export default async function authRoutes(app: FastifyInstance) {
-    app.post('/login', async (request, reply) => {
-        const { email, password } = request.body as any ?? {};
+    app.post('/login', async (
+        request: FastifyRequest<{ Body: LoginBody }>
+        , reply) => {
+        const { email, password } = request.body ?? {};
 
         if (!email || !password) {
             return reply.status(400).send({ error: "Email and password are required!" });
@@ -46,26 +51,22 @@ export default async function authRoutes(app: FastifyInstance) {
     app.get('/me', {
         onRequest: [app.authenticate as any]
     }, async (request, reply) => {
-        try {
-            const user = await prisma.user.findUnique({
-                where: { id: request.user.id },
-                select: {
-                    id: true,
-                    email: true,
-                    name: true,
-                    role: true,
-                    createdAt: true
-                }
-            });
-
-            if (!user) {
-                return reply.status(404).send({ success: false, error: 'Felhasználó nem található!' });
+        const user = await prisma.user.findUnique({
+            where: { id: request.user.id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true
             }
+        });
 
-            return reply.send({ success: true, user });
-        } catch (error) {
-            throw error;
+        if (!user) {
+            return reply.status(404).send({ success: false, error: 'User not found!' });
         }
+
+        return reply.send({ success: true, user });
     });
 
     app.get('/test-db', async (request, reply) => {

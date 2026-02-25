@@ -10,7 +10,16 @@ import warehouseRoutes from './routes/warehouse.routes';
 import productRoutes from './routes/product.routes';
 import stockRoutes from './routes/stock.routes';
 
+import cors from '@fastify/cors';
+import dashboardRoutes from './routes/dashboard.routes';
+
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
+
+app.register(cors, {
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+});
 
 app.register(authPlugin);
 app.register(errorHandler)
@@ -19,6 +28,7 @@ app.register(authRoutes, { prefix: '/api/auth' });
 app.register(productRoutes, { prefix: 'api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
 app.register(stockRoutes, { prefix: 'api/stock' });
+app.register(dashboardRoutes, { prefix: 'api/dashboard' });
 
 app.get('/health', async (request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() })

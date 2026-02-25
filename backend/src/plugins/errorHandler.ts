@@ -3,6 +3,8 @@ import { FastifyInstance, FastifyError } from 'fastify';
 
 export default fp(async (app: FastifyInstance) => {
     app.setErrorHandler((error: FastifyError, request, reply) => {
+        const isProd = process.env.NODE_ENV === 'production';
+
         app.log.error(error);
 
         if (error.message.includes("Can't reach database server") || error.message.includes("P1001")) {
@@ -15,7 +17,7 @@ export default fp(async (app: FastifyInstance) => {
 
         reply.status(500).send({ 
             success: false,
-            error: 'Internal Server Error', 
+            error: isProd ? 'Internal Server Error' : error.message, 
             message: 'An unexpected error occurred on the server side' 
         });
     });

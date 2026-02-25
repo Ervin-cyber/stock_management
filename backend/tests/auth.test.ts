@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { app, prisma } from '../src/server';
+import { app } from '../src/server';
+import prisma from '../src/lib/prisma';
 
 describe('Authentication and Basic api test', () => {
     

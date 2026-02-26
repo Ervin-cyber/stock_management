@@ -4,7 +4,7 @@ import { FastifyReply, FastifyRequest, FastifyInstance } from "fastify";
 
 export default fp(async (app: FastifyInstance) => {
     app.register(fastifyJwt, {
-        secret: process.env.JWT_SECRET || 'supersecret_fallback'
+        secret: process.env.JWT_SECRET ?? (() => { throw new Error('JWT_SECRET is not set!') })()
     });
 
     app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {

@@ -25,10 +25,10 @@ app.register(authPlugin);
 app.register(errorHandler)
 
 app.register(authRoutes, { prefix: '/api/auth' });
-app.register(productRoutes, { prefix: 'api/products' });
+app.register(productRoutes, { prefix: '/api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
-app.register(movementRoutes, { prefix: 'api/movements' });
-app.register(dashboardRoutes, { prefix: 'api/dashboard' });
+app.register(movementRoutes, { prefix: '/api/movements' });
+app.register(dashboardRoutes, { prefix: '/api/dashboard' });
 
 app.get('/health', async (request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() })

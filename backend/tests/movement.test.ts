@@ -22,8 +22,7 @@ describe('Stock & Movements API', () => {
                 email: `manager_${uniqueSuffix}@mail.com`,
                 name: 'Stock Manager',
                 password: hashedManagerPassword,
-                role: 'MANAGER',
-                active: true
+                role: 'MANAGER'
             }
         });
         managerId = managerUser.id;
@@ -41,8 +40,7 @@ describe('Stock & Movements API', () => {
                 email: `stockuser_${uniqueSuffix}@mail.com`,
                 name: 'Stock Tester User',
                 password: hashedViewerPassword,
-                role: 'VIEWER',
-                active: true
+                role: 'VIEWER'
             }
         });
         viewerUserId = viewerUser.id;
@@ -54,12 +52,12 @@ describe('Stock & Movements API', () => {
         });
         userToken = userLogin.json().token;
 
-        const w1 = await prisma.warehouse.create({ data: { name: `Source W ${uniqueSuffix}`, location: 'A' } });
-        const w2 = await prisma.warehouse.create({ data: { name: `Dest W ${uniqueSuffix}`, location: 'B' } });
+        const w1 = await prisma.warehouse.create({ data: { name: `Source W ${uniqueSuffix}`, location: 'A', createdById: managerId } });
+        const w2 = await prisma.warehouse.create({ data: { name: `Dest W ${uniqueSuffix}`, location: 'B', createdById: managerId } });
         sourceWarehouseId = w1.id;
         destWarehouseId = w2.id;
 
-        const p1 = await prisma.product.create({ data: { sku: `STK-PROD-${uniqueSuffix}`, name: 'Stock Test Product' } });
+        const p1 = await prisma.product.create({ data: { sku: `STK-PROD-${uniqueSuffix}`, name: 'Stock Test Product', createdById: managerId } });
         testProductId = p1.id;
     });
 
@@ -73,29 +71,29 @@ describe('Stock & Movements API', () => {
         await prisma.$disconnect();
     });
 
-    it('GET /api/stock - Should allow Viewer User to view stock (200)', async () => {
+    it('GET /api/movements - Should allow Viewer User to view stock (200)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/stock',
+            url: '/api/movements',
             headers: { authorization: `Bearer ${userToken}` }
         });
         expect(response.statusCode).toBe(200);
     });
 
-    it('POST /api/stock/move - Should reject Viewer User (403)', async () => {
+    it('POST /api/movements - Should reject Viewer User (403)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/stock/move',
+            url: '/api/movements',
             headers: { authorization: `Bearer ${userToken}` },
             payload: { productId: testProductId, movementType: 'IN', stockQuantity: 10, destinationWarehouseId: destWarehouseId }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('POST /api/stock/move - IN: Should successfully receive goods (201)', async () => {
+    it('POST /api/movements - IN: Should successfully receive goods (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/stock/move',
+            url: '/api/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,
@@ -113,10 +111,10 @@ describe('Stock & Movements API', () => {
         expect(stock?.stockQuantity).toBe(100);
     });
 
-    it('POST /api/stock/move - OUT: Should fail if source has insufficient stock (400)', async () => {
+    it('POST /api/movements - OUT: Should fail if source has insufficient stock (400)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/stock/move',
+            url: '/api/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,
@@ -130,10 +128,10 @@ describe('Stock & Movements API', () => {
         expect(response.json().error).toContain('Insufficient stock');
     });
 
-    it('POST /api/stock/move - TRANSFER: Should successfully transfer goods (201)', async () => {
+    it('POST /api/movements - TRANSFER: Should successfully transfer goods (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/stock/move',
+            url: '/api/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,

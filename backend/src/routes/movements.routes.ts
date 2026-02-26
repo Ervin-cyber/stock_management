@@ -1,15 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
-import { MovementType } from "@prisma/client";
 import { AppError } from "../utils/AppError";
-
-interface CreateMovementBody {
-    productId: string;
-    movementType: MovementType;
-    stockQuantity: number;
-    sourceWarehouseId?: string;
-    destinationWarehouseId?: string;
-}
+import { CreateMovementBody } from "../types";
 
 export default async function movementRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate as any);

@@ -1,21 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../lib/prisma';
-
-interface CreateProductBody {
-    sku: string;
-    name: string;
-    description?: string;
-}
-
-interface UpdateProductBody {
-    sku?: string;
-    name?: string;
-    active?: boolean;
-}
-
-interface ProductParams {
-    id: string;
-}
+import { IdentifierParam, UpsertProductBody } from '../types';
 
 export default async function productRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate as any);
@@ -29,7 +14,7 @@ export default async function productRoutes(app: FastifyInstance) {
     });
 
     app.post('/', async (
-        request: FastifyRequest<{ Body: CreateProductBody }>,
+        request: FastifyRequest<{ Body: UpsertProductBody }>,
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {
@@ -56,7 +41,7 @@ export default async function productRoutes(app: FastifyInstance) {
     });
 
     app.put('/:id', async (
-        request: FastifyRequest<{ Params: ProductParams; Body: UpdateProductBody }>,
+        request: FastifyRequest<{ Params: IdentifierParam; Body: UpsertProductBody }>,
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {
@@ -93,7 +78,7 @@ export default async function productRoutes(app: FastifyInstance) {
     });
 
     app.delete('/:id', async (
-        request: FastifyRequest<{ Params: ProductParams }>,
+        request: FastifyRequest<{ Params: IdentifierParam }>,
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {

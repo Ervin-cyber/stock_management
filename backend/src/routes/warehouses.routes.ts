@@ -1,5 +1,6 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
+import { IdentifierParam, UpsertWarehouseBody } from "../types";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate as any);
@@ -11,16 +12,20 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: warehouses });
     });
 
-    app.post('/', async (request, reply) => {
+    app.post('/', async (request: FastifyRequest<{ Body: UpsertWarehouseBody }>, reply) => {
         if (request.user.role !== 'ADMIN') {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to create a warehouse.' });
         }
 
-        const { name, location } = request.body as any ?? {};
+        const { name, location } = request.body ?? {};
         const userId = request.user.id;
 
         if (!name) {
             return reply.status(400).send({ success: false, error: 'Warehouse name is required.' });
+        }
+
+        if (!location) {
+            return reply.status(400).send({ success: false, error: 'Warehouse location is required.' });
         }
 
         const nameExists = await prisma.warehouse.findUnique({
@@ -37,13 +42,15 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         return reply.status(201).send({ success: true, data: newWarehouse });
     });
 
-    app.put('/:id', async (request, reply) => {
+    app.put('/:id', async (
+        request: FastifyRequest<{ Params: IdentifierParam; Body: UpsertWarehouseBody }>,
+        reply) => {
         if (request.user.role !== 'ADMIN') {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to update a warehouse.' });
         }
 
         const { id } = request.params as { id: string } ?? {};
-        const { name, location } = request.body as any ?? {};
+        const { name, location, active } = request.body ?? {};
         const userId = request.user.id;
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
@@ -60,13 +67,20 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
         const updatedWarehouse = await prisma.warehouse.update({
             where: { id },
-            data: { name, location, updatedById: userId }
+            data: {
+                name,
+                location,
+                active: active ?? existing.active,
+                updatedById: userId
+            }
         });
 
         return reply.send({ success: true, data: updatedWarehouse });
     });
 
-    app.delete('/:id', async (request, reply) => {
+    app.delete('/:id', async (
+        request: FastifyRequest<{ Params: IdentifierParam }>,
+        reply) => {
         if (request.user.role !== 'ADMIN') {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to delete a warehouse.' });
         }
@@ -78,7 +92,13 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             return reply.status(404).send({ success: false, error: 'Warehouse not found.' });
         }
 
-        await prisma.warehouse.delete({ where: { id } });
+        await prisma.warehouse.update({ // soft delete
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+                active: false
+            }
+        });
 
         return reply.send({ success: true, message: 'Warehouse deleted successfully.' });
     });

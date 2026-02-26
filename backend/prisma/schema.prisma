@@ -71,7 +71,7 @@ model Product {
 model Warehouse {   
   id                      String          @id @default(uuid())
   name                    String          @unique
-  location                String?
+  location                String
   active                  Boolean         @default(true)
 
   stocks                  Stock[]

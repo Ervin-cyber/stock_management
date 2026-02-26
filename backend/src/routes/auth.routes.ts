@@ -1,10 +1,8 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
-interface LoginBody {
-    email?: string;
-    password?: string;
-}
+import { LoginBody } from "../types";
+
 export default async function authRoutes(app: FastifyInstance) {
     app.post('/login', async (
         request: FastifyRequest<{ Body: LoginBody }>
@@ -22,13 +20,13 @@ export default async function authRoutes(app: FastifyInstance) {
         });
 
         if (!user) {
-            return reply.status(400).send({ error: "Wrong email or password!" });
+            return reply.status(401).send({ error: "Wrong email or password!" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            return reply.status(400).send({ error: "Wrong email or password!" });
+            return reply.status(401).send({ error: "Wrong email or password!" });
         }
 
         const token = app.jwt.sign({
@@ -67,15 +65,5 @@ export default async function authRoutes(app: FastifyInstance) {
         }
 
         return reply.send({ success: true, user });
-    });
-
-    app.get('/test-db', async (request, reply) => {
-        try {
-            const warehouses = await prisma.warehouse.findMany();
-            reply.send({ success: true, count: warehouses.length, data: warehouses });
-        } catch (error) {
-            app.log.error(error);
-            reply.status(500).send({ success: false, error: 'Database error' });
-        }
     });
 }

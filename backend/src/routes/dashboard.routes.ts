@@ -10,7 +10,9 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             where: { deletedAt: null }
         });
 
-        const totalWarehouses = await prisma.warehouse.count();
+        const totalWarehouses = await prisma.warehouse.count({
+            where: { deletedAt: null }
+        });
 
         const lowStockItems = await prisma.stock.count({
             where: {

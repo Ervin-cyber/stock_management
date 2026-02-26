@@ -3,7 +3,7 @@ import prisma from "../lib/prisma";
 import { IdentifierParam, UpsertWarehouseBody } from "../types";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate as any);
+    app.addHook('onRequest', app.authenticate);
 
     app.get('/', async (request, reply) => {
         const warehouses = await prisma.warehouse.findMany({
@@ -57,7 +57,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         const userId = request.user.id;
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
-        if (!existing) {
+        if (!existing || existing.deletedAt) {
             return reply.status(404).send({ success: false, error: 'Warehouse not found.' });
         }
 
@@ -88,7 +88,8 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to delete a warehouse.' });
         }
 
-        const { id } = request.params as { id: string } ?? {};
+        const { id } = request.params ?? {};
+        const userId = request.user.id;
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing) {
@@ -113,6 +114,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             where: { id },
             data: {
                 deletedAt: new Date(),
+                deletedById: userId,
                 active: false
             }
         });

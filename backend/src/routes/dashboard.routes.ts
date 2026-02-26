@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 
 export default async function dashboardRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate as any);
+    app.addHook('onRequest', app.authenticate);
 
     app.get('/stats', async (request: FastifyRequest, reply: FastifyReply) => {
         const totalProducts = await prisma.product.count({
@@ -16,9 +16,9 @@ export default async function dashboardRoutes(app: FastifyInstance) {
 
         const lowStockItems = await prisma.stock.count({
             where: {
-                stockQuantity: {
-                    lt: 10
-                }
+                stockQuantity: { lt: 10 },
+                product: { deletedAt: null },
+                warehouse: { deletedAt: null }
             }
         });
 

@@ -3,7 +3,7 @@ import prisma from '../lib/prisma';
 import { IdentifierParam, UpsertProductBody } from '../types';
 
 export default async function productRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate as any);
+    app.addHook('onRequest', app.authenticate);
 
     app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
         const products = await prisma.product.findMany({
@@ -86,6 +86,7 @@ export default async function productRoutes(app: FastifyInstance) {
         }
 
         const { id } = request.params ?? {};
+        const userId = request.user.id;
 
         const existing = await prisma.product.findUnique({ where: { id } });
         if (!existing || existing.deletedAt) {
@@ -110,6 +111,7 @@ export default async function productRoutes(app: FastifyInstance) {
             where: { id },
             data: {
                 deletedAt: new Date(),
+                deletedById: userId,
                 active: false
             }
         });

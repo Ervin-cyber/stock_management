@@ -4,7 +4,7 @@ import { AppError } from "../utils/AppError";
 import { CreateMovementBody } from "../types";
 
 export default async function movementRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate as any);
+    app.addHook('onRequest', app.authenticate);
 
     app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
         const movements = await prisma.stockMovement.findMany({

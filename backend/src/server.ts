@@ -1,8 +1,7 @@
 import * as dotenv from 'dotenv';
+dotenv.config();
 import authPlugin from './plugins/auth';
 import errorHandler from './plugins/errorHandler'
-
-dotenv.config();
 import Fastify from 'fastify';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';

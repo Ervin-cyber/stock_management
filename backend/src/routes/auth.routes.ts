@@ -19,7 +19,7 @@ export default async function authRoutes(app: FastifyInstance) {
             }
         });
 
-        if (!user) {
+        if (!user || !user.active || user.deletedAt) {
             return reply.status(401).send({ error: "Wrong email or password!" });
         }
 
@@ -47,7 +47,7 @@ export default async function authRoutes(app: FastifyInstance) {
     });
 
     app.get('/me', {
-        onRequest: [app.authenticate as any]
+        onRequest: [app.authenticate]
     }, async (request, reply) => {
         const user = await prisma.user.findUnique({
             where: { id: request.user.id },

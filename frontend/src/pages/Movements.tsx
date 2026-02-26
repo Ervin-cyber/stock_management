@@ -24,11 +24,11 @@ export default function Movements() {
         defaultValues: {
             movementType: 'IN',
             productId: '',
-            sourceWarehouseId: '',
-            destinationWarehouseId: '',
+            sourceWarehouseId: undefined,
+            destinationWarehouseId: undefined,
             stockQuantity: 1,
-            reference: '',
-            description: ''
+            reference: undefined,
+            description: undefined
         },
     });
 

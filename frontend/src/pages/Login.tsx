@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useNavigate } from 'react-router-dom';
+import Logo from '@/components/Logo';
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address format." }),
@@ -50,7 +51,7 @@ export default function Login() {
         <div className="flex h-screen w-full items-center justify-center bg-slate-50">
             <Card className="w-100 shadow-lg">
                 <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-2xl font-bold tracking-tight">Stock Management</CardTitle>
+                    <Logo/>
                     <CardDescription>
                         Log in to the warehouse management system
                     </CardDescription>

@@ -2,8 +2,15 @@ import { api } from '@/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Building2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
-const fetchDashboardStats = async () => {
+interface Stats {
+    totalProducts: number;
+    totalWarehouses: number;
+    lowStockItems: number;
+}
+
+const fetchDashboardStats = async (): Promise<Stats> => {
     const response = await api.get('/dashboard/stats');
     return response.data.data;
 };
@@ -16,9 +23,7 @@ export default function Dashboard() {
 
     if (isLoading) {
         return (
-            <div className="flex h-[80dvh] items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-            </div>
+            <LoadingSpinner/>
         );
     }
 

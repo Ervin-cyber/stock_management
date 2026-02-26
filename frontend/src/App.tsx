@@ -4,6 +4,9 @@ import AuthGuard from './components/AuthGuard'
 import Dashboard from './pages/Dashboard'
 import DashboardLayout from './layouts/DashboardLayout'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Warehouses from './pages/Warehouses'
+import Products from './pages/Products'
+import Movements from './pages/Movements'
 
 function App() {
   const queryClient = new QueryClient();
@@ -17,6 +20,9 @@ function App() {
           <Route element={<AuthGuard />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/warehouses" element={<Warehouses />} />
+              <Route path="/movements" element={<Movements />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

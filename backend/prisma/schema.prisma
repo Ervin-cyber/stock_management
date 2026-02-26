@@ -38,6 +38,7 @@ model Product {
   sku                     String          @unique
   name                    String      
   active                  Boolean         @default(true)
+  description             String?
 
   stocks                  Stock[]
   movements               StockMovement[]
@@ -84,7 +85,9 @@ model StockMovement {
   movementType            MovementType  
   sourceWarehouseId       String? 
   destinationWarehouseId  String? 
-  stockQuantity           Int 
+  stockQuantity           Int
+  reference               String?
+  description             String? 
 
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt

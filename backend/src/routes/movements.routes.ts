@@ -86,6 +86,8 @@ export default async function movementRoutes(app: FastifyInstance) {
                 else if (movementType === 'TRANSFER') {
                     if (!sourceWarehouseId || !destinationWarehouseId) throw new AppError('Source and Destination warehouse is required for TRANSFER movement.');
 
+                    if (sourceWarehouseId === destinationWarehouseId) throw new AppError('Destination must be different from source.');
+
                     const currentStock = await tx.stock.findUnique({
                         where: { warehouseId_productId: { warehouseId: sourceWarehouseId, productId: productId } }
                     });

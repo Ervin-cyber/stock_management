@@ -7,6 +7,9 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
     app.get('/', async (request, reply) => {
         const warehouses = await prisma.warehouse.findMany({
+            where: {
+                deletedAt: null
+            },
             orderBy: { createdAt: 'desc' }
         });
         return reply.send({ success: true, data: warehouses });
@@ -90,6 +93,20 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing) {
             return reply.status(404).send({ success: false, error: 'Warehouse not found.' });
+        }
+
+        const activeStock = await prisma.stock.findFirst({
+            where: {
+                warehouseId: id,
+                stockQuantity: { gt: 0 } // greater than
+            }
+        });
+
+        if (activeStock) {
+            return reply.status(400).send({
+                success: false,
+                error: 'Cannot delete warehouse. It still contains active stock. Please transfer or remove all items first.'
+            });
         }
 
         await prisma.warehouse.update({ // soft delete

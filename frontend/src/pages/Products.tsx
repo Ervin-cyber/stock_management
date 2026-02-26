@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, Plus } from 'lucide-react';
+import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,11 +17,17 @@ import {
 } from '@/components/ui/dialog';
 import { productSchema, type ProductFormValues } from '@/schemas/product.schema';
 import { useProducts } from '@/hooks/useProducts';
+import type { Product } from '@/types';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function Products() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const { products, isLoading, isCreating, createProduct, error } = useProducts();
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    const [productToDelete, setProductToDelete] = useState<string | null>(null);
+
+    const { products, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts();
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
@@ -30,10 +36,15 @@ export default function Products() {
 
     const onSubmit = async (data: ProductFormValues) => {
         try {
-            await createProduct(data);
+            if (editingProduct) {
+                await updateProduct({ id: editingProduct.id, data });
+            } else {
+                await createProduct(data);
+            }
 
-            form.reset();
             setIsDialogOpen(false);
+            setEditingProduct(null);
+            resetForm();
         } catch (error: any) {
             const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
 
@@ -43,6 +54,21 @@ export default function Products() {
             });
         }
     };
+
+    const resetForm = () => {
+        form.reset({ sku: '', name: '', description: '' });
+    }
+
+    const handleDelete = async () => {
+        if (!productToDelete) return;
+
+        try {
+            await deleteProduct({ id: productToDelete });
+            setProductToDelete(null);
+        } catch (error) {
+            setProductToDelete(null);
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -136,7 +162,7 @@ export default function Products() {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 {isLoading ? (
                     <LoadingSpinner />
-                ) : error ? (
+                ) : productsError ? (
                     <div className="p-8 text-center text-red-500">
                         Failed to load products. Please try again later.
                     </div>
@@ -151,6 +177,7 @@ export default function Products() {
                                 <TableHead className="w-[100px]">SKU</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -165,12 +192,48 @@ export default function Products() {
                                     <TableCell className="text-slate-500 truncate max-w-[200px]">
                                         {product.description || '-'}
                                     </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setEditingProduct(product);
+                                                    form.reset({
+                                                        sku: product.sku || '',
+                                                        name: product.name || '',
+                                                        description: product.description || ''
+                                                    });
+                                                    setIsDialogOpen(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4 text-blue-600" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setProductToDelete(product.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-rose-600" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 )}
             </div>
+            <ConfirmDialog
+                isOpen={!!productToDelete}
+                onClose={() => setProductToDelete(null)}
+                onConfirm={handleDelete}
+                title="Delete this product?"
+                description="This operation cannot be undone."
+                confirmText="Delete"
+                isLoading={isDeleting}
+            />
         </div>
     );
 }

@@ -92,6 +92,20 @@ export default async function productRoutes(app: FastifyInstance) {
             return reply.status(404).send({ success: false, error: 'Product not found.' });
         }
 
+        const activeStock = await prisma.stock.findFirst({
+            where: {
+                productId: id,
+                stockQuantity: { gt: 0 } 
+            }
+        });
+
+        if (activeStock) {
+            return reply.status(400).send({ 
+                success: false, 
+                error: 'Cannot delete product. There is still active stock in one or more warehouses. Please remove all items first.' 
+            });
+        }
+
         await prisma.product.update({ // soft delete
             where: { id },
             data: {

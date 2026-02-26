@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Plus } from 'lucide-react';
+import { Building2, Pencil, Plus, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,11 +18,17 @@ import {
 import { warehouseSchema, type WarehouseFormValues } from '@/schemas/warehouse.schema';
 import { useWarehouses } from '@/hooks/useWarehouses';
 import { formatDate } from '@/utils/formatter';
+import type { Warehouse } from '@/types';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function Warehouses() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const { warehouses, isLoading, isCreating, createWarehouse, error } = useWarehouses();
+    const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+
+    const [warehouseToDelete, setWarehouseToDelete] = useState<string | null>(null);
+
+    const { warehouses, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, isUpdating, updateError, deleteWarehouse, isDeleting, deleteError } = useWarehouses();
 
     // Form initialization
     const form = useForm<WarehouseFormValues>({
@@ -32,10 +38,15 @@ export default function Warehouses() {
 
     const onSubmit = async (data: WarehouseFormValues) => {
         try {
-            await createWarehouse(data);
+            if (editingWarehouse) {
+                await updateWarehouse({ id: editingWarehouse.id, data });
+            } else {
+                await createWarehouse(data);
+            }
 
-            form.reset();
             setIsDialogOpen(false);
+            setEditingWarehouse(null);
+            form.reset({ name: '', location: '' });
         } catch (error: any) {
             const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
 
@@ -43,6 +54,18 @@ export default function Warehouses() {
                 type: 'server',
                 message: errorMessage
             });
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!warehouseToDelete) return;
+
+        try {
+            await deleteWarehouse({ id: warehouseToDelete });
+            setWarehouseToDelete(null);
+        } catch (error) {
+
+            setWarehouseToDelete(null);
         }
     };
 
@@ -124,7 +147,7 @@ export default function Warehouses() {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 {isLoading ? (
                     <LoadingSpinner />
-                ) : error ? (
+                ) : warehousesError ? (
                     <div className="p-8 text-center text-red-500">
                         Failed to load warehouses. Please try again later.
                     </div>
@@ -140,6 +163,7 @@ export default function Warehouses() {
                                 <TableHead>Name</TableHead>
                                 <TableHead>Location</TableHead>
                                 <TableHead className="text-right">Created At</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -155,12 +179,47 @@ export default function Warehouses() {
                                     <TableCell className="text-right text-slate-500">
                                         {formatDate(warehouse.createdAt)}
                                     </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setEditingWarehouse(warehouse);
+                                                    form.reset({
+                                                        name: warehouse.name || '',
+                                                        location: warehouse.location || ''
+                                                    });
+                                                    setIsDialogOpen(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4 text-blue-600" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setWarehouseToDelete(warehouse.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-rose-600" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 )}
             </div>
+            <ConfirmDialog
+                isOpen={!!warehouseToDelete}
+                onClose={() => setWarehouseToDelete(null)}
+                onConfirm={handleDelete}
+                title="Delete this warehouse?"
+                description="This operation cannot be undone."
+                confirmText="Delete"
+                isLoading={isDeleting}
+            />
         </div>
     );
 }

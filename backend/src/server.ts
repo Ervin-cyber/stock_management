@@ -15,8 +15,10 @@ import movementRoutes from './routes/movements.routes';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
+const FRONTEND_URL = process.env.FRONTEND_URL || (() => { throw new Error('FRONTEND_URL is not set!') })()
+
 app.register(cors, {
-    origin: 'http://localhost:5173',
+    origin: FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });

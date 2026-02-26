@@ -8,9 +8,9 @@ import Warehouses from './pages/Warehouses'
 import Products from './pages/Products'
 import Movements from './pages/Movements'
 
-function App() {
-  const queryClient = new QueryClient();
+const queryClient = new QueryClient();
 
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

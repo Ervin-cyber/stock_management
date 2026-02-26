@@ -11,36 +11,30 @@ interface CreateMovementBody {
     destinationWarehouseId?: string;
 }
 
-export default async function stockRoutes(app: FastifyInstance) {
+export default async function movementRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate as any);
 
     app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
-        const stocks = await prisma.stock.findMany({
-            where: { deletedAt: null },
-            orderBy: { updatedAt: 'desc' }
-        });
-        return reply.send({ success: true, data: stocks });
-    });
-
-    app.get('/movements', async (request: FastifyRequest, reply: FastifyReply) => {
         const movements = await prisma.stockMovement.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
                 product: { select: { name: true, sku: true } },
                 sourceWarehouse: { select: { name: true } },
-                destinationWarehouse: { select: { name: true } }
+                destinationWarehouse: { select: { name: true } },
+                createdBy: { select: { name: true } }
             }
         });
         return reply.send({ success: true, data: movements });
     });
 
-    app.post('/move', async (request: FastifyRequest<{ Body: CreateMovementBody }>, reply: FastifyReply) => {
+    app.post('/', async (request: FastifyRequest<{ Body: CreateMovementBody }>, reply: FastifyReply) => {
         try {
             if (request.user.role === 'VIEWER') {
                 return reply.status(403).send({ success: false, error: 'Forbidden: Insufficient permissions.' });
             }
 
             let { productId, movementType, stockQuantity, sourceWarehouseId, destinationWarehouseId } = request.body ?? {};
+            const userId = request.user.id;
 
             //sanitization
             if (sourceWarehouseId === "") sourceWarehouseId = undefined;
@@ -48,7 +42,7 @@ export default async function stockRoutes(app: FastifyInstance) {
 
             if (!productId || !movementType || !stockQuantity || stockQuantity <= 0) {
                 return reply.status(400).send({ success: false, error: 'Invalid input data or quantity <= 0!' });
-            }   
+            }
 
             //fail fast
             const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -126,7 +120,8 @@ export default async function stockRoutes(app: FastifyInstance) {
                         movementType,
                         sourceWarehouseId,
                         destinationWarehouseId,
-                        stockQuantity
+                        stockQuantity,
+                        createdById: userId
                     }
                 })
 

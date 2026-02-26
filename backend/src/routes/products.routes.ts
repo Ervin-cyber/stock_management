@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 interface CreateProductBody {
     sku: string;
     name: string;
+    description?: string;
 }
 
 interface UpdateProductBody {
@@ -35,7 +36,8 @@ export default async function productRoutes(app: FastifyInstance) {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required.' });
         }
 
-        const { sku, name } = request.body ?? {};
+        const { sku, name, description } = request.body ?? {};
+        const userId = request.user.id;
 
         if (!sku || !name) {
             return reply.status(400).send({ success: false, error: 'SKU and name are required.' });
@@ -47,7 +49,7 @@ export default async function productRoutes(app: FastifyInstance) {
         }
 
         const newProduct = await prisma.product.create({
-            data: { sku, name }
+            data: { sku, name, description, createdById: userId }
         });
 
         return reply.status(201).send({ success: true, data: newProduct });
@@ -63,6 +65,7 @@ export default async function productRoutes(app: FastifyInstance) {
 
         const { id } = request.params ?? {};
         const { sku, name, active } = request.body ?? {};
+        const userId = request.user.id;
 
         const existing = await prisma.product.findUnique({ where: { id } });
         if (!existing || existing.deletedAt) {
@@ -81,7 +84,8 @@ export default async function productRoutes(app: FastifyInstance) {
             data: {
                 sku: sku ?? existing.sku,
                 name: name ?? existing.name,
-                active: active ?? existing.active
+                active: active ?? existing.active,
+                updatedById: userId,
             }
         });
 

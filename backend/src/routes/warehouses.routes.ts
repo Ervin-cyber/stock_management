@@ -17,6 +17,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         }
 
         const { name, location } = request.body as any ?? {};
+        const userId = request.user.id;
 
         if (!name) {
             return reply.status(400).send({ success: false, error: 'Warehouse name is required.' });
@@ -30,7 +31,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         }
 
         const newWarehouse = await prisma.warehouse.create({
-            data: { name, location }
+            data: { name, location, createdById: userId }
         });
 
         return reply.status(201).send({ success: true, data: newWarehouse });
@@ -43,6 +44,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
         const { id } = request.params as { id: string } ?? {};
         const { name, location } = request.body as any ?? {};
+        const userId = request.user.id;
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing) {
@@ -58,7 +60,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
         const updatedWarehouse = await prisma.warehouse.update({
             where: { id },
-            data: { name, location }
+            data: { name, location, updatedById: userId }
         });
 
         return reply.send({ success: true, data: updatedWarehouse });

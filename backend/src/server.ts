@@ -6,12 +6,12 @@ dotenv.config();
 import Fastify from 'fastify';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
-import warehouseRoutes from './routes/warehouse.routes';
-import productRoutes from './routes/product.routes';
-import stockRoutes from './routes/stock.routes';
+import warehouseRoutes from './routes/warehouses.routes';
+import productRoutes from './routes/products.routes';
 
 import cors from '@fastify/cors';
 import dashboardRoutes from './routes/dashboard.routes';
+import movementRoutes from './routes/movements.routes';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
@@ -27,7 +27,7 @@ app.register(errorHandler)
 app.register(authRoutes, { prefix: '/api/auth' });
 app.register(productRoutes, { prefix: 'api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
-app.register(stockRoutes, { prefix: 'api/stock' });
+app.register(movementRoutes, { prefix: 'api/movements' });
 app.register(dashboardRoutes, { prefix: 'api/dashboard' });
 
 app.get('/health', async (request, reply) => {

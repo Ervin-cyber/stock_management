@@ -1,11 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { api } from '@/api/axios';
 import { Package, Plus } from 'lucide-react';
-
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,74 +15,33 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-
-interface Product {
-    id: number;
-    sku: string;
-    name: string;
-    description?: string;
-    createdAt: string;
-}
-
-const productSchema = z.object({
-    sku: z.string().min(3, { message: "SKU must be at least 3 characters." }),
-    name: z.string().min(3, { message: "Name must be at least 3 characters." }),
-    description: z.string().optional(),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
-
-const fetchProducts = async (): Promise<Product[]> => {
-    const response = await api.get('/products');
-    return response.data.data ?? [];
-};
-
-const createProduct = async (data: ProductFormValues) => {
-    const response = await api.post('/products', data);
-    return response.data;
-};
+import { productSchema, type ProductFormValues } from '@/schemas/product.schema';
+import { useProducts } from '@/hooks/useProducts';
 
 export default function Products() {
-    const queryClient = useQueryClient();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const { products, isLoading, isCreating, createProduct, error } = useProducts();
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
         defaultValues: { sku: '', name: '', description: '' },
     });
 
-    const { data: products, isLoading, isError } = useQuery({
-        queryKey: ['products'],
-        queryFn: fetchProducts,
-    });
+    const onSubmit = async (data: ProductFormValues) => {
+        try {
+            await createProduct(data);
 
-    const mutation = useMutation({
-        mutationFn: createProduct,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['products'] });
-            setIsDialogOpen(false);
             form.reset();
-        },
-        onError: (error: any) => {
+            setIsDialogOpen(false);
+        } catch (error: any) {
             const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
-            const statusCode = error.response?.status;
 
-            if (statusCode === 409 || errorMessage.toLowerCase().includes('unique') || errorMessage.toLowerCase().includes('exist')) {
-                form.setError('sku', {
-                    type: 'server',
-                    message: "This SKU is already taken.",
-                });
-            } else {
-                form.setError('root', {
-                    type: 'server',
-                    message: errorMessage,
-                });
-            }
+            form.setError('root', {
+                type: 'server',
+                message: errorMessage
+            });
         }
-    });
-
-    const onSubmit = (data: ProductFormValues) => {
-        mutation.mutate(data);
     };
 
     return (
@@ -166,10 +121,10 @@ export default function Products() {
                                 <div className="flex justify-end pt-4">
                                     <Button
                                         type="submit"
-                                        disabled={mutation.isPending}
+                                        disabled={isCreating}
                                         className="bg-blue-600 hover:bg-blue-700"
                                     >
-                                        {mutation.isPending ? "Saving..." : "Save Product"}
+                                        {isCreating ? "Saving..." : "Save Product"}
                                     </Button>
                                 </div>
                             </form>
@@ -181,7 +136,7 @@ export default function Products() {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 {isLoading ? (
                     <LoadingSpinner />
-                ) : isError ? (
+                ) : error ? (
                     <div className="p-8 text-center text-red-500">
                         Failed to load products. Please try again later.
                     </div>

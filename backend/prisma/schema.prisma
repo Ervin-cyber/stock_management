@@ -28,6 +28,17 @@ model User {
   role                    Role      
   active                  Boolean         @default(true)
 
+  // Prisma reverse relationship
+  createdProducts         Product[]       @relation("ProductCreatedBy")
+  updatedProducts         Product[]       @relation("ProductUpdatedBy")
+  deletedProducts         Product[]       @relation("ProductDeletedBy")
+
+  createdWarehouses       Warehouse[]     @relation("WarehouseCreatedBy")
+  updatedWarehouses       Warehouse[]     @relation("WarehouseUpdatedBy")
+  deletedWarehouses       Warehouse[]     @relation("WarehouseDeletedBy")
+
+  createdMovements        StockMovement[] @relation("MovementCreatedBy")
+
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
   deletedAt               DateTime?       //soft-delete
@@ -43,6 +54,15 @@ model Product {
   stocks                  Stock[]
   movements               StockMovement[]
 
+  createdById             String
+  createdBy               User            @relation("ProductCreatedBy", fields: [createdById], references: [id])
+                      
+  updatedById             String?         
+  updatedBy               User?           @relation("ProductUpdatedBy", fields: [updatedById], references: [id])
+                      
+  deletedById             String?       
+  deletedBy               User?           @relation("ProductDeletedBy", fields: [deletedById], references: [id])
+
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
   deletedAt               DateTime?       //soft-delete
@@ -54,13 +74,22 @@ model Warehouse {
   location                String?
   active                  Boolean         @default(true)
 
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
-  deletedAt               DateTime?       //soft-delete
-
   stocks                  Stock[]
   sourceMovements         StockMovement[] @relation("SourceMovements")
   destinationMovements    StockMovement[] @relation("DestinationMovements")
+
+  createdById             String
+  createdBy               User            @relation("WarehouseCreatedBy", fields: [createdById], references: [id])
+
+  updatedById             String?         
+  updatedBy               User?           @relation("WarehouseUpdatedBy", fields: [updatedById], references: [id])
+
+  deletedById             String?       
+  deletedBy               User?           @relation("WarehouseDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  deletedAt               DateTime?       //soft-delete
 }   
 
 model Stock {
@@ -71,7 +100,6 @@ model Stock {
 
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
-  deletedAt               DateTime?       //soft-delete
 
   warehouse               Warehouse       @relation(fields: [warehouseId], references: [id])
   product                 Product         @relation(fields: [productId], references: [id])
@@ -79,7 +107,7 @@ model Stock {
   @@unique([warehouseId, productId])
 }
 
-model StockMovement {
+model StockMovement { //immutable
   id                      String          @id @default(uuid())
   productId               String  
   movementType            MovementType  
@@ -89,9 +117,9 @@ model StockMovement {
   reference               String?
   description             String? 
 
+  createdById             String
+  createdBy               User            @relation("MovementCreatedBy", fields: [createdById], references: [id])
   createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
-  deletedAt               DateTime?       //soft-delete
 
   sourceWarehouse         Warehouse?      @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
   destinationWarehouse    Warehouse?      @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])

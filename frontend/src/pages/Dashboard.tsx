@@ -3,12 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Building2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from '@/components/LoadingSpinner';
-
-interface Stats {
-    totalProducts: number;
-    totalWarehouses: number;
-    lowStockItems: number;
-}
+import type { Stats } from '@/types';
+import { formatNumber } from '@/utils/formatter';
 
 const fetchDashboardStats = async (): Promise<Stats> => {
     const response = await api.get('/dashboard/stats');
@@ -48,7 +44,7 @@ export default function Dashboard() {
                         <Package className="h-4 w-4 text-blue-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
+                        <div className="text-2xl font-bold">{formatNumber(stats?.totalProducts || 0)}</div>
                     </CardContent>
                 </Card>
 
@@ -58,7 +54,7 @@ export default function Dashboard() {
                         <Building2 className="h-4 w-4 text-emerald-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.totalWarehouses || 0}</div>
+                        <div className="text-2xl font-bold">{formatNumber(stats?.totalWarehouses || 0)}</div>
                     </CardContent>
                 </Card>
 
@@ -68,7 +64,7 @@ export default function Dashboard() {
                         <AlertTriangle className="h-4 w-4 text-rose-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-rose-600">{stats?.lowStockItems || 0} items</div>
+                        <div className="text-2xl font-bold text-rose-600">{formatNumber(stats?.lowStockItems || 0)} items</div>
                     </CardContent>
                 </Card>
             </div>

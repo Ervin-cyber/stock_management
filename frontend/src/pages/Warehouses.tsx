@@ -1,13 +1,8 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { api } from '@/api/axios';
 import { Building2, Plus } from 'lucide-react';
-
 import LoadingSpinner from '@/components/LoadingSpinner';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,64 +15,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-
-interface Warehouse {
-    id: number;
-    name: string;
-    location: string;
-    createdAt: string;
-}
-
-const warehouseSchema = z.object({
-    name: z.string().min(3, { message: "Name must be at least 3 characters." }),
-    location: z.string().min(3, { message: "Location must be at least 3 characters." }),
-});
-
-type WarehouseFormValues = z.infer<typeof warehouseSchema>;
-
-const fetchWarehouses = async (): Promise<Warehouse[]> => {
-    const response = await api.get('/warehouses');
-    return response.data?.data ?? [];
-};
-
-const createWarehouse = async (data: WarehouseFormValues) => {
-    const response = await api.post('/warehouses', data);
-    return response.data;
-};
+import { warehouseSchema, type WarehouseFormValues } from '@/schemas/warehouse.schema';
+import { useWarehouses } from '@/hooks/useWarehouses';
+import { formatDate } from '@/utils/formatter';
 
 export default function Warehouses() {
-    const queryClient = useQueryClient();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const { data: warehouses, isLoading, isError } = useQuery({
-        queryKey: ['warehouses'],
-        queryFn: fetchWarehouses,
-    });
-
-    const mutation = useMutation({
-        mutationFn: createWarehouse,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['warehouses'] });
-            setIsDialogOpen(false);
-            form.reset();
-        },
-        onError: (error: any) => {
-            const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
-            const statusCode = error.response?.status;
-
-            if (statusCode === 409 || errorMessage.toLowerCase().includes('exist')) {
-                form.setError('name', {
-                    type: 'server',
-                    message: "This warehouse name is already taken.",
-                });
-            } else {
-                form.setError('root', {
-                    type: 'server',
-                    message: errorMessage,
-                });
-            }
-        }
-    });
+    const { warehouses, isLoading, isCreating, createWarehouse, error } = useWarehouses();
 
     // Form initialization
     const form = useForm<WarehouseFormValues>({
@@ -85,8 +30,20 @@ export default function Warehouses() {
         defaultValues: { name: '', location: '' },
     });
 
-    const onSubmit = (data: WarehouseFormValues) => {
-        mutation.mutate(data);
+    const onSubmit = async (data: WarehouseFormValues) => {
+        try {
+            await createWarehouse(data);
+
+            form.reset();
+            setIsDialogOpen(false);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+
+            form.setError('root', {
+                type: 'server',
+                message: errorMessage
+            });
+        }
     };
 
     return (
@@ -152,10 +109,10 @@ export default function Warehouses() {
                                 <div className="flex justify-end pt-4">
                                     <Button
                                         type="submit"
-                                        disabled={mutation.isPending}
+                                        disabled={isCreating}
                                         className="bg-blue-600 hover:bg-blue-700"
                                     >
-                                        {mutation.isPending ? "Saving..." : "Save Warehouse"}
+                                        {isCreating ? "Saving..." : "Save Warehouse"}
                                     </Button>
                                 </div>
                             </form>
@@ -167,7 +124,7 @@ export default function Warehouses() {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 {isLoading ? (
                     <LoadingSpinner />
-                ) : isError ? (
+                ) : error ? (
                     <div className="p-8 text-center text-red-500">
                         Failed to load warehouses. Please try again later.
                     </div>
@@ -196,11 +153,7 @@ export default function Warehouses() {
                                     </TableCell>
                                     <TableCell>{warehouse.location}</TableCell>
                                     <TableCell className="text-right text-slate-500">
-                                        {new Date(warehouse.createdAt).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
+                                        {formatDate(warehouse.createdAt)}
                                     </TableCell>
                                 </TableRow>
                             ))}

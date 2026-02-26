@@ -1,11 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { api } from '@/api/axios';
 import { ArrowRightLeft, Plus, ArrowDownRight, ArrowUpRight, RefreshCw } from 'lucide-react';
-
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,63 +10,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Movement {
-    id: number;
-    movementType: 'IN' | 'OUT' | 'TRANSFER';
-    stockQuantity: number;
-    reference?: string;
-    description?: string;
-    createdAt: string;
-    product: { id: string; name: string; sku: string };
-    sourceWarehouse?: { id: string; name: string };
-    destinationWarehouse?: { id: string; name: string };
-    createdBy: { id: number; name: string };
-}
-
-const movementSchema = z.object({
-    movementType: z.enum(['IN', 'OUT', 'TRANSFER'], { message: "Please select a movement type." }),
-    productId: z.string().min(1, { message: "Please select a product." }),
-    sourceWarehouseId: z.string().optional(),
-    destinationWarehouseId: z.string().optional(),
-    stockQuantity: z.coerce.number().min(1, { message: "Quantity must be at least 1." }),
-    reference: z.string().optional(),
-    description: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if ((data.movementType === 'OUT' || data.movementType === 'TRANSFER') && !data.sourceWarehouseId) {
-        ctx.addIssue({ path: ['sourceWarehouseId'], message: "Source warehouse is required.", code: z.ZodIssueCode.custom });
-    }
-    if ((data.movementType === 'IN' || data.movementType === 'TRANSFER') && !data.destinationWarehouseId) {
-        ctx.addIssue({ path: ['destinationWarehouseId'], message: "Destination warehouse is required.", code: z.ZodIssueCode.custom });
-    }
-    if (data.movementType === 'TRANSFER' && data.sourceWarehouseId === data.destinationWarehouseId) {
-        ctx.addIssue({ path: ['destinationWarehouseId'], message: "Destination must be different from source.", code: z.ZodIssueCode.custom });
-    }
-});
-
-type MovementFormValues = z.infer<typeof movementSchema>;
-
-const fetchMovements = async (): Promise<Movement[]> => (await api.get('/stock/movements')).data.data;
-const fetchProducts = async () => (await api.get('/products')).data.data;
-const fetchWarehouses = async () => (await api.get('/warehouses')).data.data;
-
-const createMovement = async (data: any) => {
-    const response = await api.post('/stock/move', data);
-    return response.data;
-};
+import { movementSchema, type MovementFormValues } from '@/schemas/movement.schema';
+import { useMovements } from '@/hooks/useMovements';
+import { formatDateTime, formatNumber } from '@/utils/formatter';
 
 export default function Movements() {
-    const queryClient = useQueryClient();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    const { movements, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements();
+
     const form = useForm<MovementFormValues>({
-        resolver: zodResolver(movementSchema),
-        defaultValues: { 
-            movementType: 'IN', 
-            productId: '', 
+        resolver: zodResolver(movementSchema) as any,
+        defaultValues: {
+            movementType: 'IN',
+            productId: '',
             sourceWarehouseId: '',
             destinationWarehouseId: '',
-            stockQuantity: 1, 
+            stockQuantity: 1,
             reference: '',
             description: ''
         },
@@ -78,34 +34,20 @@ export default function Movements() {
 
     const selectedType = form.watch('movementType');
 
-    const { data: movements, isLoading: isMovementsLoading } = useQuery({ queryKey: ['movements'], queryFn: fetchMovements });
-    const { data: products } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
-    const { data: warehouses } = useQuery({ queryKey: ['warehouses'], queryFn: fetchWarehouses });
+    const onSubmit = async (data: MovementFormValues) => {
+        try {
+            await createMovement(data);
 
-    const mutation = useMutation({
-        mutationFn: createMovement,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['movements'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-            setIsDialogOpen(false);
             form.reset();
-        },
-        onError: (error: any) => {
+            setIsDialogOpen(false);
+        } catch (error: any) {
             const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
-            form.setError('root', { type: 'server', message: errorMessage });
-        }
-    });
 
-    const onSubmit = (data: MovementFormValues) => {
-        const payload = {
-            ...data,
-            productId: data.productId,
-            sourceWarehouseId: (data.movementType === 'OUT' || data.movementType === 'TRANSFER') && data.sourceWarehouseId 
-                                ? data.sourceWarehouseId : null,
-            destinationWarehouseId: (data.movementType === 'IN' || data.movementType === 'TRANSFER') && data.destinationWarehouseId 
-                                ? data.destinationWarehouseId : null,
-        };
-        mutation.mutate(payload);
+            form.setError('root', {
+                type: 'server',
+                message: errorMessage
+            });
+        }
     };
 
     return (
@@ -118,14 +60,14 @@ export default function Movements() {
                     </h1>
                     <p className="text-slate-500">Record IN, OUT, and TRANSFER inventory transactions.</p>
                 </div>
-                
+
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700">
                             <Plus className="mr-2 h-4 w-4" /> New Movement
                         </Button>
                     </DialogTrigger>
-                    
+
                     <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>Record Stock Movement</DialogTitle>
@@ -133,10 +75,10 @@ export default function Movements() {
                                 Add items (IN), remove items (OUT), or move them between warehouses (TRANSFER).
                             </DialogDescription>
                         </DialogHeader>
-                        
+
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                                
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
@@ -280,7 +222,7 @@ export default function Movements() {
                                         )}
                                     />
                                 </div>
-                                
+
                                 {form.formState.errors.root && (
                                     <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
                                         {form.formState.errors.root.message}
@@ -288,8 +230,8 @@ export default function Movements() {
                                 )}
 
                                 <div className="flex justify-end pt-4">
-                                    <Button type="submit" disabled={mutation.isPending} className="bg-blue-600 hover:bg-blue-700">
-                                        {mutation.isPending ? "Saving..." : "Record Movement"}
+                                    <Button type="submit" disabled={isCreating} className="bg-blue-600 hover:bg-blue-700">
+                                        {isCreating ? "Saving..." : "Record Movement"}
                                     </Button>
                                 </div>
                             </form>
@@ -299,8 +241,12 @@ export default function Movements() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                {isMovementsLoading ? (
+                {isLoading ? (
                     <LoadingSpinner />
+                ) : error ? (
+                    <div className="p-8 text-center text-red-500">
+                        Failed to load stock movements. Please try again later.
+                    </div>
                 ) : movements?.length === 0 ? (
                     <div className="p-8 text-center text-slate-500">
                         No movements recorded yet.
@@ -345,16 +291,14 @@ export default function Movements() {
                                     </TableCell>
                                     <TableCell className="text-slate-600">{movement.sourceWarehouse?.name || '-'}</TableCell>
                                     <TableCell className="text-slate-600">{movement.destinationWarehouse?.name || '-'}</TableCell>
-                                    <TableCell className="text-right font-bold text-slate-900">{movement.stockQuantity}</TableCell>
+                                    <TableCell className="text-right font-bold text-slate-900">{formatNumber(movement.stockQuantity)}</TableCell>
                                     <TableCell>
                                         <div className="text-sm text-slate-900">{movement.reference || '-'}</div>
                                         {movement.description && <div className="text-xs text-slate-500 truncate max-w-[150px]">{movement.description}</div>}
                                     </TableCell>
                                     <TableCell className="text-slate-600">{movement.createdBy?.name}</TableCell>
                                     <TableCell className="text-right text-slate-500 text-sm">
-                                        {new Date(movement.createdAt).toLocaleString('en-US', {
-                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                        })}
+                                        {formatDateTime(movement.createdAt)}
                                     </TableCell>
                                 </TableRow>
                             ))}

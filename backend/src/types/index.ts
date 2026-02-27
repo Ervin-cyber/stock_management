@@ -38,3 +38,15 @@ export interface PaginationParams {
         search?: string
     }
 }
+export interface MovementsQueryParams {
+    Querystring: {
+        page?: string;
+        limit?: string;
+        type?: string; 
+        sourceWarehouseId?: string; 
+        destinationWarehouseId?: string;
+        search?: string; 
+        startDate?: string; 
+        endDate?: string;
+    }
+}

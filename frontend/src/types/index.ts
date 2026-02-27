@@ -81,3 +81,14 @@ export interface DataTablePaginationProps {
     totalPages: number;
     onPageChange: (page: number) => void;
 }
+
+export interface MovementFilters {
+    page?: number;
+    limit?: number;
+    type?: string;
+    sourceWarehouseId?: string;
+    destinationWarehouseId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+}

@@ -2,18 +2,15 @@ import { createMovement, fetchMovements } from "@/api/movements.api";
 import { fetchProducts } from "@/api/products.api";
 import { fetchWarehouses } from "@/api/warehouses.api";
 import type { MovementFormValues } from "@/schemas/movement.schema";
+import type { MovementFilters } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 
-export const useMovements = () => {
+export const useMovements = (filters: MovementFilters = {}) => {
     const queryClient = useQueryClient();
 
-    const [page, setPage] = useState(1);
-    const limit = 10;
-
     const movementsQuery = useQuery({
-        queryKey: ['movements', page],
-        queryFn: () => fetchMovements(page, limit),
+        queryKey: ['movements', filters.page, filters.type, filters.sourceWarehouseId, filters.destinationWarehouseId, filters.search, filters.startDate, filters.endDate],
+        queryFn: () => fetchMovements(filters),
     });
     const productsQuery = useQuery({
         queryKey: ['products'],
@@ -47,8 +44,6 @@ export const useMovements = () => {
         isLoading: movementsQuery.isLoading,
         error: movementsQuery.error,
         meta: movementsQuery.data?.meta,
-        page,
-        setPage,
 
         products: productsQuery.data?.data || [],
         warehouses: warehousesQuery.data?.data || [],

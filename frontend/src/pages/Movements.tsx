@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRightLeft, Plus, ArrowDownRight, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { ArrowRightLeft, Plus, ArrowDownRight, ArrowUpRight, RefreshCw, Search, Filter, X } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,11 +14,35 @@ import { movementSchema, type MovementFormValues } from '@/schemas/movement.sche
 import { useMovements } from '@/hooks/useMovements';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import DataTablePagination from '@/components/DataTablePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Movements() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [page, setPage] = useState(1);
 
-    const { movements, meta, page, setPage, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements();
+    const [showFilters, setShowFilters] = useState(false);
+    const [typeFilter, setTypeFilter] = useState('ALL');
+    const [sourceWarehouseFilter, setSourceWarehouseFilter] = useState('ALL');
+    const [destinationWarehouseFilter, setDestinationWarehouseFilter] = useState('ALL');
+    const [productSearch, setProductSearch] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const debouncedProductSearch = useDebounce(productSearch, 500);
+
+    const { movements, meta, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements({
+        page,
+        type: typeFilter,
+        sourceWarehouseId: sourceWarehouseFilter,
+        destinationWarehouseId: destinationWarehouseFilter,
+        search: debouncedProductSearch,
+        startDate: startDate,
+        endDate: endDate
+    });
+
+    useEffect(() => {
+        setPage(1);
+    }, [typeFilter, sourceWarehouseFilter, destinationWarehouseFilter, debouncedProductSearch, startDate, endDate]);
 
     const form = useForm<MovementFormValues>({
         resolver: zodResolver(movementSchema) as any,
@@ -35,6 +59,23 @@ export default function Movements() {
 
     const selectedType = form.watch('movementType');
 
+    const activeFiltersCount = [
+        typeFilter !== 'ALL',
+        sourceWarehouseFilter !== 'ALL',
+        destinationWarehouseFilter !== 'ALL',
+        startDate !== '',
+        endDate !== ''
+    ].filter(Boolean).length;
+
+    const clearFilters = () => {
+        setTypeFilter('ALL');
+        setSourceWarehouseFilter('ALL');
+        setDestinationWarehouseFilter('ALL');
+        setStartDate('');
+        setEndDate('');
+        setProductSearch('');
+    };
+
     const onSubmit = async (data: MovementFormValues) => {
         try {
             await createMovement(data);
@@ -48,6 +89,20 @@ export default function Movements() {
                 type: 'server',
                 message: errorMessage
             });
+        }
+    };
+
+    const handleSourceChange = (val: string) => { // block source === destination 
+        setSourceWarehouseFilter(val);
+        if (val !== 'ALL' && val === destinationWarehouseFilter) {
+            setDestinationWarehouseFilter('ALL');
+        }
+    };
+
+    const handleDestinationChange = (val: string) => {
+        setDestinationWarehouseFilter(val);
+        if (val !== 'ALL' && val === sourceWarehouseFilter) {
+            setSourceWarehouseFilter('ALL');
         }
     };
 
@@ -242,6 +297,97 @@ export default function Movements() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="space-y-4 m-3">
+
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
+                        <div className="relative flex-1 w-full max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder="Search Product by name or SKU..."
+                                value={productSearch}
+                                onChange={(e) => setProductSearch(e.target.value)}
+                                className="pl-9 bg-white"
+                            />
+                        </div>
+
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <Button
+                                variant={activeFiltersCount > 0 ? "default" : "outline"}
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="flex-1 sm:flex-none"
+                            >
+                                <Filter className="h-4 w-4 mr-2" />
+                                Filters
+                                {activeFiltersCount > 0 && (
+                                    <Badge variant="secondary" className="ml-2 bg-white/20 hover:bg-white/30 text-current border-none">
+                                        {activeFiltersCount}
+                                    </Badge>
+                                )}
+                            </Button>
+
+                            {(activeFiltersCount > 0 || productSearch !== '') && (
+                                <Button variant="ghost" onClick={clearFilters} className="text-slate-500 hover:text-rose-600 px-3">
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {showFilters && (
+                        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 shadow-inner animate-in slide-in-from-top-2 duration-200">
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Movement Type</label>
+                                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                                    <SelectTrigger><SelectValue placeholder="ALL Type" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">ALL</SelectItem>
+                                        <SelectItem value="IN">IN</SelectItem>
+                                        <SelectItem value="OUT">OUT</SelectItem>
+                                        <SelectItem value="TRANSFER">TRANSFER</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Source Warehouse</label>
+                                <Select value={sourceWarehouseFilter} onValueChange={handleSourceChange}>
+                                    <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">ALL</SelectItem>
+                                        {warehouses.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Destination Warehouse</label>
+                                <Select value={destinationWarehouseFilter} onValueChange={handleDestinationChange}>
+                                    <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">ALL</SelectItem>
+                                        {warehouses.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Date (From)</label>
+                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-white" />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Date (To)</label>
+                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-white" />
+                            </div>
+
+                        </div>
+                    )}
+                </div>
                 {isLoading ? (
                     <LoadingSpinner />
                 ) : error ? (
@@ -306,13 +452,11 @@ export default function Movements() {
                                 ))}
                             </TableBody>
                         </Table>
-                        <div className="py-4 border-t">
-                            <DataTablePagination
-                                currentPage={page}
-                                totalPages={meta?.totalPages || 1}
-                                onPageChange={setPage}
-                            />
-                        </div>
+                        <DataTablePagination
+                            currentPage={page}
+                            totalPages={meta?.totalPages || 1}
+                            onPageChange={setPage}
+                        />
                     </>
                 )}
             </div>

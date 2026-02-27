@@ -1,23 +1,65 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
-import { CreateMovementBody, PaginationParams } from "../types";
+import { CreateMovementBody, MovementsQueryParams, PaginationParams } from "../types";
 
 export default async function movementRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request: FastifyRequest<PaginationParams>, reply: FastifyReply) => {
+    app.get('/', async (request: FastifyRequest<MovementsQueryParams>, reply: FastifyReply) => {
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
 
+        const { type, sourceWarehouseId, destinationWarehouseId, search, startDate, endDate } = request.query;
+
         const skip = (page - 1) * limit;
 
+        const whereClause: any = {};
+
+        if (type && type !== 'ALL') {
+            whereClause.movementType = type;
+        }
+
+        if (sourceWarehouseId && sourceWarehouseId !== 'ALL') {
+            whereClause.OR = [
+                { sourceWarehouseId: sourceWarehouseId },
+            ];
+        }
+
+        if (destinationWarehouseId && destinationWarehouseId !== 'ALL') {
+            whereClause.OR = [
+                { destinationWarehouseId: destinationWarehouseId }
+            ];
+        }
+
+        if (sourceWarehouseId && destinationWarehouseId && sourceWarehouseId !== 'ALL' && destinationWarehouseId === sourceWarehouseId) throw new AppError('Destination must be different from source.');
+
+        if (search) {
+            whereClause.product = {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { sku: { contains: search, mode: 'insensitive' } }
+                ]
+            };
+        }
+
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+            if (startDate) {
+                whereClause.createdAt.gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+            if (endDate) {
+                whereClause.createdAt.lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
+        }
+
         const [totalCount, movements] = await prisma.$transaction([
-            prisma.stockMovement.count(),
+            prisma.stockMovement.count({ where: whereClause }),
             prisma.stockMovement.findMany({
+                orderBy: { createdAt: 'desc' },
+                where: whereClause,
                 skip: skip,
                 take: limit,
-                orderBy: { createdAt: 'desc' },
                 include: {
                     product: { select: { name: true, sku: true } },
                     sourceWarehouse: { select: { name: true } },

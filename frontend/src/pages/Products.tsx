@@ -23,6 +23,7 @@ import DataTablePagination from '@/components/DataTablePagination';
 import ProductDetailSheet from '@/components/ProductDetailSheet';
 import ActionTooltip from '@/components/ActionTooltip';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Products() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,6 +36,9 @@ export default function Products() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearch = useDebounce(searchTerm, 500);
+
+    const userRole = useAuthStore((state) => state.user?.role);
+    const isAdmin = userRole === 'ADMIN';
 
     const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts({ search: debouncedSearch });
 
@@ -93,83 +97,92 @@ export default function Products() {
                     </h1>
                     <p className="text-slate-500">Manage your master product catalog and SKUs.</p>
                 </div>
-
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                <ActionTooltip label={!isAdmin ? "You do not have permission to create" : ""} showTooltip={!isAdmin}>
+                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                        <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            onClick={() => {
+                                setEditingProduct(null);
+                                resetForm();
+                                setIsDialogOpen(true);
+                            }}
+                            disabled={!isAdmin}
+                        >
                             <Plus className="mr-2 h-4 w-4" /> Add Product
                         </Button>
-                    </DialogTrigger>
+                    </span>
+                </ActionTooltip>
+                {isAdmin && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>{editingProduct != null ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                                <DialogDescription>
+                                    Enter the product details below. The SKU must be unique.
+                                </DialogDescription>
+                            </DialogHeader>
 
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Add New Product</DialogTitle>
-                            <DialogDescription>
-                                Enter the product details below. The SKU must be unique.
-                            </DialogDescription>
-                        </DialogHeader>
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="sku"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>SKU (Item Number)</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. PRD-001" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Product Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Wireless Mouse" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Description (Optional)</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Brief description..." {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                                <FormField
-                                    control={form.control}
-                                    name="sku"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SKU (Item Number)</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. PRD-001" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                    {form.formState.errors.root && (
+                                        <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
+                                            {form.formState.errors.root.message}
+                                        </div>
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Product Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Wireless Mouse" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="description"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Description (Optional)</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Brief description..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
 
-                                {form.formState.errors.root && (
-                                    <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
-                                        {form.formState.errors.root.message}
+                                    <div className="flex justify-end pt-4">
+                                        <Button
+                                            type="submit"
+                                            disabled={isCreating}
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                            {isCreating ? "Saving..." : "Save Product"}
+                                        </Button>
                                     </div>
-                                )}
-
-                                <div className="flex justify-end pt-4">
-                                    <Button
-                                        type="submit"
-                                        disabled={isCreating}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        {isCreating ? "Saving..." : "Save Product"}
-                                    </Button>
-                                </div>
-                            </form>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <div className="flex items-center w-full max-w-sm relative">
@@ -228,34 +241,40 @@ export default function Products() {
                                                         <Eye className="h-4 w-4 text-slate-600" />
                                                     </Button>
                                                 </ActionTooltip>
-                                                <ActionTooltip label="Edit Product">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                            setEditingProduct(product);
-                                                            form.reset({
-                                                                sku: product.sku || '',
-                                                                name: product.name || '',
-                                                                description: product.description || ''
-                                                            });
-                                                            setIsDialogOpen(true);
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Pencil className="h-4 w-4 text-blue-600" />
-                                                    </Button>
+                                                <ActionTooltip label={!isAdmin ? "You do not have permission to edit" : "Edit product"}>
+                                                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                setEditingProduct(product);
+                                                                form.reset({
+                                                                    sku: product.sku || '',
+                                                                    name: product.name || '',
+                                                                    description: product.description || ''
+                                                                });
+                                                                setIsDialogOpen(true);
+                                                            }}
+                                                            className="cursor-pointer"
+                                                            disabled={!isAdmin}
+                                                        >
+                                                            <Pencil className="h-4 w-4 text-blue-600" />
+                                                        </Button>
+                                                    </span>
                                                 </ActionTooltip>
 
-                                                <ActionTooltip label="Delete Product">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => setProductToDelete(product.id)}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-rose-600" />
-                                                    </Button>
+                                                <ActionTooltip label={!isAdmin ? "You do not have permission to delete" : "Delete product"}>
+                                                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setProductToDelete(product.id)}
+                                                            className="cursor-pointer"
+                                                            disabled={!isAdmin}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-rose-600" />
+                                                        </Button>
+                                                    </span>
                                                 </ActionTooltip>
                                             </div>
                                         </TableCell>

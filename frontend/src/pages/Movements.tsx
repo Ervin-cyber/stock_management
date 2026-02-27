@@ -15,6 +15,8 @@ import { useMovements } from '@/hooks/useMovements';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import DataTablePagination from '@/components/DataTablePagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthStore } from '@/store/authStore';
+import ActionTooltip from '@/components/ActionTooltip';
 
 export default function Movements() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,6 +31,9 @@ export default function Movements() {
     const [endDate, setEndDate] = useState('');
 
     const debouncedProductSearch = useDebounce(productSearch, 500);
+
+    const userRole = useAuthStore((state) => state.user?.role);
+    const isAdmin = userRole === 'ADMIN';
 
     const { movements, meta, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements({
         page,
@@ -117,13 +122,18 @@ export default function Movements() {
                     <p className="text-slate-500">Record IN, OUT, and TRANSFER inventory transactions.</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                <ActionTooltip label={!isAdmin ? "You do not have permission to create" : ""} showTooltip={!isAdmin}>
+                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                        <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            onClick={() => setIsDialogOpen(true)}
+                            disabled={!isAdmin}
+                        >
                             <Plus className="mr-2 h-4 w-4" /> New Movement
                         </Button>
-                    </DialogTrigger>
+                    </span>
+                </ActionTooltip>
 
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>Record Stock Movement</DialogTitle>

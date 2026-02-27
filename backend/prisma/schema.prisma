@@ -124,4 +124,10 @@ model StockMovement { //immutable
   sourceWarehouse         Warehouse?      @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
   destinationWarehouse    Warehouse?      @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])
   product                 Product         @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@index([movementType])
+  @@index([sourceWarehouseId])
+  @@index([destinationWarehouseId])
+  @@index([createdAt])
 }

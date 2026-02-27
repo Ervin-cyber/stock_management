@@ -9,9 +9,13 @@ import type { ReactNode } from "react";
 interface ActionTooltipProps {
   children: ReactNode;
   label: string;
+  showTooltip?: boolean;
 }
 
-export default function ActionTooltip({ children, label }: ActionTooltipProps) {
+export default function ActionTooltip({ children, label, showTooltip = true }: ActionTooltipProps) {
+  if (!showTooltip) {
+    return <>{children}</>;
+  }
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>

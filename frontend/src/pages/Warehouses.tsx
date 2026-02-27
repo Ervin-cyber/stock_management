@@ -22,6 +22,7 @@ import type { Warehouse } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DataTablePagination from '@/components/DataTablePagination';
 import ActionTooltip from '@/components/ActionTooltip';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Warehouses() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -31,6 +32,9 @@ export default function Warehouses() {
     const [warehouseToDelete, setWarehouseToDelete] = useState<string | null>(null);
 
     const { warehouses, meta, page, setPage, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, isUpdating, updateError, deleteWarehouse, isDeleting, deleteError } = useWarehouses();
+
+    const userRole = useAuthStore((state) => state.user?.role);
+    const isAdmin = userRole === 'ADMIN';
 
     // Form initialization
     const form = useForm<WarehouseFormValues>({
@@ -48,7 +52,7 @@ export default function Warehouses() {
 
             setIsDialogOpen(false);
             setEditingWarehouse(null);
-            form.reset({ name: '', location: '' });
+            resetForm();
         } catch (error: any) {
             const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
 
@@ -58,6 +62,10 @@ export default function Warehouses() {
             });
         }
     };
+
+    const resetForm = () => {
+        form.reset({ name: '', location: '' });
+    }
 
     const handleDelete = async () => {
         if (!warehouseToDelete) return;
@@ -82,68 +90,79 @@ export default function Warehouses() {
                     <p className="text-slate-500">Manage your physical storage locations.</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                <ActionTooltip label={!isAdmin ? "You do not have permission to create" : ""} showTooltip={!isAdmin}>
+                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                        <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            onClick={() => {
+                                setEditingWarehouse(null);
+                                resetForm();
+                                setIsDialogOpen(true);
+                            }}
+                            disabled={!isAdmin}
+                        >
                             <Plus className="mr-2 h-4 w-4" /> Add Warehouse
                         </Button>
-                    </DialogTrigger>
+                    </span>
+                </ActionTooltip>
 
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Add New Warehouse</DialogTitle>
-                            <DialogDescription>
-                                Enter the details of the new storage location here. Click save when you're done.
-                            </DialogDescription>
-                        </DialogHeader>
+                {isAdmin && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>{editingWarehouse != null ? 'Edit Warehouse' : 'Add New Warehouse'}</DialogTitle>
+                                <DialogDescription>
+                                    Enter the details of the new storage location here. Click save when you're done.
+                                </DialogDescription>
+                            </DialogHeader>
 
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Warehouse Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Main Hub" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Warehouse Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Main Hub" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="location"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Location</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Budapest, District 9" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {form.formState.errors.root && (
+                                        <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
+                                            {form.formState.errors.root.message}
+                                        </div>
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="location"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Location</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Budapest, District 9" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                {form.formState.errors.root && (
-                                    <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
-                                        {form.formState.errors.root.message}
+
+                                    <div className="flex justify-end pt-4">
+                                        <Button
+                                            type="submit"
+                                            disabled={isCreating}
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                            {isCreating ? "Saving..." : "Save Warehouse"}
+                                        </Button>
                                     </div>
-                                )}
-
-                                <div className="flex justify-end pt-4">
-                                    <Button
-                                        type="submit"
-                                        disabled={isCreating}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        {isCreating ? "Saving..." : "Save Warehouse"}
-                                    </Button>
-                                </div>
-                            </form>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
@@ -184,33 +203,39 @@ export default function Warehouses() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <ActionTooltip label="Edit Warehouse">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                            setEditingWarehouse(warehouse);
-                                                            form.reset({
-                                                                name: warehouse.name || '',
-                                                                location: warehouse.location || ''
-                                                            });
-                                                            setIsDialogOpen(true);
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Pencil className="h-4 w-4 text-blue-600" />
-                                                    </Button>
+                                                <ActionTooltip label={!isAdmin ? "You do not have permission to edit" : "Edit warehouse"}>
+                                                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                setEditingWarehouse(warehouse);
+                                                                form.reset({
+                                                                    name: warehouse.name || '',
+                                                                    location: warehouse.location || ''
+                                                                });
+                                                                setIsDialogOpen(true);
+                                                            }}
+                                                            className="cursor-pointer"
+                                                            disabled={!isAdmin}
+                                                        >
+                                                            <Pencil className="h-4 w-4 text-blue-600" />
+                                                        </Button>
+                                                    </span>
                                                 </ActionTooltip>
 
-                                                <ActionTooltip label="Delete Warehouse">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => setWarehouseToDelete(warehouse.id)}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-rose-600" />
-                                                    </Button>
+                                                <ActionTooltip label={!isAdmin ? "You do not have permission to delete" : "Delete warehouse"}>
+                                                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setWarehouseToDelete(warehouse.id)}
+                                                            className="cursor-pointer"
+                                                            disabled={!isAdmin}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-rose-600" />
+                                                        </Button>
+                                                    </span>
                                                 </ActionTooltip>
                                             </div>
                                         </TableCell>

@@ -1,16 +1,33 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../lib/prisma';
-import { IdentifierParam, UpsertProductBody } from '../types';
+import { IdentifierParam, PaginationParams, UpsertProductBody } from '../types';
 
 export default async function productRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
-        const products = await prisma.product.findMany({
-            where: { deletedAt: null },
-            orderBy: { name: 'asc' }
+    app.get('/', async (request: FastifyRequest<PaginationParams>, reply: FastifyReply) => {
+        const isAll = request.query.all === 'true';
+
+        const page = Number(request.query.page) || 1;
+        const limit = Number(request.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const [totalCount, products] = await prisma.$transaction([
+            prisma.product.count({ where: { deletedAt: null } }),
+            prisma.product.findMany({
+                where: { deletedAt: null },
+                orderBy: { name: 'asc' },
+                skip: isAll ? undefined : skip,
+                take: isAll ? undefined : limit,
+            })
+        ]);
+
+        return reply.send({
+            success: true,
+            data: products,
+            meta: isAll ? null : { total: totalCount, page, limit, totalPages: Math.ceil(totalCount / limit) }
         });
-        return reply.send({ success: true, data: products });
     });
 
     app.post('/', async (
@@ -96,14 +113,14 @@ export default async function productRoutes(app: FastifyInstance) {
         const activeStock = await prisma.stock.findFirst({
             where: {
                 productId: id,
-                stockQuantity: { gt: 0 } 
+                stockQuantity: { gt: 0 }
             }
         });
 
         if (activeStock) {
-            return reply.status(400).send({ 
-                success: false, 
-                error: 'Cannot delete product. There is still active stock in one or more warehouses. Please remove all items first.' 
+            return reply.status(400).send({
+                success: false,
+                error: 'Cannot delete product. There is still active stock in one or more warehouses. Please remove all items first.'
             });
         }
 

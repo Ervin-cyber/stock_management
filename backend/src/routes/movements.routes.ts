@@ -1,22 +1,41 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
-import { CreateMovementBody } from "../types";
+import { CreateMovementBody, PaginationParams } from "../types";
 
 export default async function movementRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
-        const movements = await prisma.stockMovement.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: {
-                product: { select: { name: true, sku: true } },
-                sourceWarehouse: { select: { name: true } },
-                destinationWarehouse: { select: { name: true } },
-                createdBy: { select: { name: true } }
+    app.get('/', async (request: FastifyRequest<PaginationParams>, reply: FastifyReply) => {
+        const page = Number(request.query.page) || 1;
+        const limit = Number(request.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const [totalCount, movements] = await prisma.$transaction([
+            prisma.stockMovement.count(),
+            prisma.stockMovement.findMany({
+                skip: skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    product: { select: { name: true, sku: true } },
+                    sourceWarehouse: { select: { name: true } },
+                    destinationWarehouse: { select: { name: true } },
+                    createdBy: { select: { name: true } }
+                }
+            })
+        ]);
+        return reply.send({
+            success: true,
+            data: movements,
+            meta: {
+                total: totalCount,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(totalCount / limit)
             }
         });
-        return reply.send({ success: true, data: movements });
     });
 
     app.post('/', async (request: FastifyRequest<{ Body: CreateMovementBody }>, reply: FastifyReply) => {

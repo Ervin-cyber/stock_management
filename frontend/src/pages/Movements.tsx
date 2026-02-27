@@ -13,11 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { movementSchema, type MovementFormValues } from '@/schemas/movement.schema';
 import { useMovements } from '@/hooks/useMovements';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
+import DataTablePagination from '@/components/DataTablePagination';
 
 export default function Movements() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const { movements, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements();
+    const { movements, meta, page, setPage, products, warehouses, isLoading, isCreating, createMovement, error } = useMovements();
 
     const form = useForm<MovementFormValues>({
         resolver: zodResolver(movementSchema) as any,
@@ -252,58 +253,67 @@ export default function Movements() {
                         No movements recorded yet.
                     </div>
                 ) : (
-                    <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead className="w-[100px]">Type</TableHead>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Source</TableHead>
-                                <TableHead>Destination</TableHead>
-                                <TableHead className="text-right">Qty</TableHead>
-                                <TableHead>Reference</TableHead>
-                                <TableHead>User</TableHead>
-                                <TableHead className="text-right">Date</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {movements?.map((movement) => (
-                                <TableRow key={movement.id} className="hover:bg-slate-50">
-                                    <TableCell>
-                                        {movement.movementType === 'IN' && (
-                                            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                                <ArrowDownRight className="h-3 w-3" /> IN
-                                            </Badge>
-                                        )}
-                                        {movement.movementType === 'OUT' && (
-                                            <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                                <ArrowUpRight className="h-3 w-3" /> OUT
-                                            </Badge>
-                                        )}
-                                        {movement.movementType === 'TRANSFER' && (
-                                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                                <RefreshCw className="h-3 w-3" /> TRANS
-                                            </Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="font-semibold text-slate-900">{movement.product?.name}</div>
-                                        <div className="text-xs text-slate-500">{movement.product?.sku}</div>
-                                    </TableCell>
-                                    <TableCell className="text-slate-600">{movement.sourceWarehouse?.name || '-'}</TableCell>
-                                    <TableCell className="text-slate-600">{movement.destinationWarehouse?.name || '-'}</TableCell>
-                                    <TableCell className="text-right font-bold text-slate-900">{formatNumber(movement.stockQuantity)}</TableCell>
-                                    <TableCell>
-                                        <div className="text-sm text-slate-900">{movement.reference || '-'}</div>
-                                        {movement.description && <div className="text-xs text-slate-500 truncate max-w-[150px]">{movement.description}</div>}
-                                    </TableCell>
-                                    <TableCell className="text-slate-600">{movement.createdBy?.name}</TableCell>
-                                    <TableCell className="text-right text-slate-500 text-sm">
-                                        {formatDateTime(movement.createdAt)}
-                                    </TableCell>
+                    <>
+                        <Table>
+                            <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                    <TableHead className="w-[100px]">Type</TableHead>
+                                    <TableHead>Product</TableHead>
+                                    <TableHead>Source</TableHead>
+                                    <TableHead>Destination</TableHead>
+                                    <TableHead className="text-right">Qty</TableHead>
+                                    <TableHead>Reference</TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead className="text-right">Date</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {movements?.map((movement) => (
+                                    <TableRow key={movement.id} className="hover:bg-slate-50">
+                                        <TableCell>
+                                            {movement.movementType === 'IN' && (
+                                                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none flex items-center gap-1 w-[85px] justify-center">
+                                                    <ArrowDownRight className="h-3 w-3" /> IN
+                                                </Badge>
+                                            )}
+                                            {movement.movementType === 'OUT' && (
+                                                <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-none flex items-center gap-1 w-[85px] justify-center">
+                                                    <ArrowUpRight className="h-3 w-3" /> OUT
+                                                </Badge>
+                                            )}
+                                            {movement.movementType === 'TRANSFER' && (
+                                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-none flex items-center gap-1 w-[85px] justify-center">
+                                                    <RefreshCw className="h-3 w-3" /> TRANS
+                                                </Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="font-semibold text-slate-900">{movement.product?.name}</div>
+                                            <div className="text-xs text-slate-500">{movement.product?.sku}</div>
+                                        </TableCell>
+                                        <TableCell className="text-slate-600">{movement.sourceWarehouse?.name || '-'}</TableCell>
+                                        <TableCell className="text-slate-600">{movement.destinationWarehouse?.name || '-'}</TableCell>
+                                        <TableCell className="text-right font-bold text-slate-900">{formatNumber(movement.stockQuantity)}</TableCell>
+                                        <TableCell>
+                                            <div className="text-sm text-slate-900">{movement.reference || '-'}</div>
+                                            {movement.description && <div className="text-xs text-slate-500 truncate max-w-[150px]">{movement.description}</div>}
+                                        </TableCell>
+                                        <TableCell className="text-slate-600">{movement.createdBy?.name}</TableCell>
+                                        <TableCell className="text-right text-slate-500 text-sm">
+                                            {formatDateTime(movement.createdAt)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="py-4 border-t">
+                            <DataTablePagination
+                                currentPage={page}
+                                totalPages={meta?.totalPages || 1}
+                                onPageChange={setPage}
+                            />
+                        </div>
+                    </>
                 )}
             </div>
         </div>

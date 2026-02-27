@@ -11,10 +11,23 @@ import productRoutes from './routes/products.routes';
 import cors from '@fastify/cors';
 import dashboardRoutes from './routes/dashboard.routes';
 import movementRoutes from './routes/movements.routes';
+import fastifyRateLimit from '@fastify/rate-limit';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
 const FRONTEND_URL = process.env.FRONTEND_URL || (() => { throw new Error('FRONTEND_URL is not set!') })()
+
+app.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (request, context) {
+        return {
+            success: false,
+            error: `Too many requests! Please try again after ${context.after} sec.`,
+            message: `Too many requests! Please try again after ${context.after} sec.`
+        };
+    }
+});
 
 app.register(cors, {
     origin: FRONTEND_URL,

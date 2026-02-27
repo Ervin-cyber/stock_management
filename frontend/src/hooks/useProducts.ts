@@ -1,13 +1,17 @@
 import { createProduct, deleteProduct, fetchProducts, updateProduct } from "@/api/products.api";
 import type { ProductFormValues } from "@/schemas/product.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 export const useProducts = () => {
     const queryClient = useQueryClient();
 
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
     const productsQuery = useQuery({
-        queryKey: ['products'],
-        queryFn: fetchProducts,
+        queryKey: ['products', page],
+        queryFn: () => fetchProducts(false, page, limit),
     });
 
     const createMutation = useMutation({
@@ -34,9 +38,12 @@ export const useProducts = () => {
     });
 
     return {
-        products: productsQuery.data || [],
+        products: productsQuery.data?.data || [],
         isLoading: productsQuery.isLoading,
         productsError: productsQuery.error,
+        meta: productsQuery.data?.meta,
+        page,
+        setPage,
 
         createProduct: createMutation.mutateAsync,
         isCreating: createMutation.isPending,

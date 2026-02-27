@@ -29,3 +29,11 @@ export interface CreateMovementBody {
 export interface IdentifierParam {
     id: string;
 }
+
+export interface PaginationParams {
+    Querystring: {
+        page?: string;
+        limit?: string;
+        all?: string;
+    }
+}

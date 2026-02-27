@@ -1,18 +1,35 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
-import { IdentifierParam, UpsertWarehouseBody } from "../types";
+import { IdentifierParam, PaginationParams, UpsertWarehouseBody } from "../types";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request, reply) => {
-        const warehouses = await prisma.warehouse.findMany({
-            where: {
-                deletedAt: null
-            },
-            orderBy: { createdAt: 'desc' }
+    app.get('/', async (request: FastifyRequest<PaginationParams>, reply) => {
+        const isAll = request.query.all === 'true';
+
+        const page = Number(request.query.page) || 1;
+        const limit = Number(request.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const [totalCount, warehouses] = await prisma.$transaction([
+            prisma.warehouse.count({ where: { deletedAt: null } }),
+            prisma.warehouse.findMany({
+                skip: isAll ? undefined : skip,
+                take: isAll ? undefined : limit,
+                where: {
+                    deletedAt: null
+                },
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
+
+        return reply.send({
+            success: true,
+            data: warehouses,
+            meta: isAll ? null : { total: totalCount, page, limit, totalPages: Math.ceil(totalCount / limit) }
         });
-        return reply.send({ success: true, data: warehouses });
     });
 
     app.post('/', async (request: FastifyRequest<{ Body: UpsertWarehouseBody }>, reply) => {
@@ -52,7 +69,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
             return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to update a warehouse.' });
         }
 
-        const { id } = request.params as { id: string } ?? {};
+        const { id } = request.params ?? {};
         const { name, location, active } = request.body ?? {};
         const userId = request.user.id;
 

@@ -19,6 +19,7 @@ import { productSchema, type ProductFormValues } from '@/schemas/product.schema'
 import { useProducts } from '@/hooks/useProducts';
 import type { Product } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import DataTablePagination from '@/components/DataTablePagination';
 
 export default function Products() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,7 +28,7 @@ export default function Products() {
 
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
-    const { products, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts();
+    const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts();
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
@@ -171,58 +172,65 @@ export default function Products() {
                         No products found. Click "Add Product" to create one.
                     </div>
                 ) : (
-                    <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead className="w-[100px]">SKU</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products?.map((product) => (
-                                <TableRow key={product.id} className="hover:bg-slate-50">
-                                    <TableCell className="font-medium text-slate-900">
-                                        {product?.sku}
-                                    </TableCell>
-                                    <TableCell className="font-semibold text-slate-700">
-                                        {product?.name}
-                                    </TableCell>
-                                    <TableCell className="text-slate-500 truncate max-w-[200px]">
-                                        {product.description || '-'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setEditingProduct(product);
-                                                    form.reset({
-                                                        sku: product.sku || '',
-                                                        name: product.name || '',
-                                                        description: product.description || ''
-                                                    });
-                                                    setIsDialogOpen(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4 text-blue-600" />
-                                            </Button>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setProductToDelete(product.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-rose-600" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
+                    <>
+                        <Table>
+                            <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                    <TableHead className="w-[100px]">SKU</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {products?.map((product) => (
+                                    <TableRow key={product.id} className="hover:bg-slate-50">
+                                        <TableCell className="font-medium text-slate-900">
+                                            {product?.sku}
+                                        </TableCell>
+                                        <TableCell className="font-semibold text-slate-700">
+                                            {product?.name}
+                                        </TableCell>
+                                        <TableCell className="text-slate-500 truncate max-w-[200px]">
+                                            {product.description || '-'}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setEditingProduct(product);
+                                                        form.reset({
+                                                            sku: product.sku || '',
+                                                            name: product.name || '',
+                                                            description: product.description || ''
+                                                        });
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4 text-blue-600" />
+                                                </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setProductToDelete(product.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-rose-600" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <DataTablePagination
+                            currentPage={page}
+                            totalPages={meta?.totalPages || 1}
+                            onPageChange={setPage}
+                        />
+                    </>
                 )}
             </div>
             <ConfirmDialog

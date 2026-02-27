@@ -1,10 +1,10 @@
-import type { Product } from "@/types";
+import type { PaginatedResponse, Product } from "@/types";
 import { api } from "./axios";
 import type { ProductFormValues } from "@/schemas/product.schema";
 
-export const fetchProducts = async (): Promise<Product[]> => {
-    const response = await api.get('/products');
-    return response.data.data ?? [];
+export const fetchProducts = async (all = false, page = 1, limit = 10): Promise<PaginatedResponse<Product[]>> => {
+    const response = await api.get(`/products?page=${page}&limit=${limit}&all=${all}`);
+    return response.data;
 };
 
 export const createProduct = async (data: ProductFormValues) => {

@@ -1,13 +1,17 @@
 import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from "@/api/warehouses.api";
 import type { WarehouseFormValues } from "@/schemas/warehouse.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 export const useWarehouses = () => {
     const queryClient = useQueryClient();
 
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
     const warehousesQuery = useQuery({
-        queryKey: ['warehouses'],
-        queryFn: fetchWarehouses,
+        queryKey: ['warehouses', page],
+        queryFn: () => fetchWarehouses(false, page, limit),
     });
 
     const createMutation = useMutation({
@@ -34,9 +38,12 @@ export const useWarehouses = () => {
     });
 
     return {
-        warehouses: warehousesQuery.data || [],
+        warehouses: warehousesQuery.data?.data || [],
         isLoading: warehousesQuery.isLoading,
         warehousesError: warehousesQuery.error,
+        meta: warehousesQuery.data?.meta,
+        page,
+        setPage,
 
         createWarehouse: createMutation.mutateAsync,
         isCreating: createMutation.isPending,

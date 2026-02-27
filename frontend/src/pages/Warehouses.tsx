@@ -20,6 +20,7 @@ import { useWarehouses } from '@/hooks/useWarehouses';
 import { formatDate } from '@/utils/formatter';
 import type { Warehouse } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import DataTablePagination from '@/components/DataTablePagination';
 
 export default function Warehouses() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function Warehouses() {
 
     const [warehouseToDelete, setWarehouseToDelete] = useState<string | null>(null);
 
-    const { warehouses, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, isUpdating, updateError, deleteWarehouse, isDeleting, deleteError } = useWarehouses();
+    const { warehouses, meta, page, setPage, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, isUpdating, updateError, deleteWarehouse, isDeleting, deleteError } = useWarehouses();
 
     // Form initialization
     const form = useForm<WarehouseFormValues>({
@@ -156,59 +157,66 @@ export default function Warehouses() {
                         No warehouses found. Click "Add Warehouse" to create one.
                     </div>
                 ) : (
-                    <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead className="w-20">ID</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Location</TableHead>
-                                <TableHead className="text-right">Created At</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {warehouses?.map((warehouse) => (
-                                <TableRow key={warehouse.id} className="hover:bg-slate-50">
-                                    <TableCell className="font-medium text-slate-500">
-                                        #{warehouse.id}
-                                    </TableCell>
-                                    <TableCell className="font-semibold text-slate-900">
-                                        {warehouse.name}
-                                    </TableCell>
-                                    <TableCell>{warehouse.location}</TableCell>
-                                    <TableCell className="text-right text-slate-500">
-                                        {formatDate(warehouse.createdAt)}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setEditingWarehouse(warehouse);
-                                                    form.reset({
-                                                        name: warehouse.name || '',
-                                                        location: warehouse.location || ''
-                                                    });
-                                                    setIsDialogOpen(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4 text-blue-600" />
-                                            </Button>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setWarehouseToDelete(warehouse.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-rose-600" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
+                    <>
+                        <Table>
+                            <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                    <TableHead className="w-20">ID</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead className="text-right">Created At</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {warehouses?.map((warehouse) => (
+                                    <TableRow key={warehouse.id} className="hover:bg-slate-50">
+                                        <TableCell className="font-medium text-slate-500">
+                                            #{warehouse.id}
+                                        </TableCell>
+                                        <TableCell className="font-semibold text-slate-900">
+                                            {warehouse.name}
+                                        </TableCell>
+                                        <TableCell>{warehouse.location}</TableCell>
+                                        <TableCell className="text-right text-slate-500">
+                                            {formatDate(warehouse.createdAt)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setEditingWarehouse(warehouse);
+                                                        form.reset({
+                                                            name: warehouse.name || '',
+                                                            location: warehouse.location || ''
+                                                        });
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4 text-blue-600" />
+                                                </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setWarehouseToDelete(warehouse.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-rose-600" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <DataTablePagination
+                            currentPage={page}
+                            totalPages={meta?.totalPages || 1}
+                            onPageChange={setPage}
+                        />
+                    </>
                 )}
             </div>
             <ConfirmDialog

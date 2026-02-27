@@ -2,8 +2,8 @@ import type { PaginatedResponse, Product } from "@/types";
 import { api } from "./axios";
 import type { ProductFormValues } from "@/schemas/product.schema";
 
-export const fetchProducts = async (all = false, page = 1, limit = 10): Promise<PaginatedResponse<Product[]>> => {
-    const response = await api.get(`/products?page=${page}&limit=${limit}&all=${all}`);
+export const fetchProducts = async (all = false, page = 1, limit = 10, search = ''): Promise<PaginatedResponse<Product[]>> => {
+    const response = await api.get(`/products?page=${page}&limit=${limit}&all=${all}&search=${encodeURIComponent(search)}`);
     return response.data;
 };
 

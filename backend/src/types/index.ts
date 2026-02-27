@@ -35,5 +35,6 @@ export interface PaginationParams {
         page?: string;
         limit?: string;
         all?: string;
+        search?: string
     }
 }

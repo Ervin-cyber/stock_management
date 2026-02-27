@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, Package, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Package, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import DataTablePagination from '@/components/DataTablePagination';
 import ProductDetailSheet from '@/components/ProductDetailSheet';
 import ActionTooltip from '@/components/ActionTooltip';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Products() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,7 +33,14 @@ export default function Products() {
 
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
-    const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts();
+    const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 500);
+
+    const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts({ search: debouncedSearch });
+
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, setPage]);
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
@@ -162,6 +170,16 @@ export default function Products() {
                         </Form>
                     </DialogContent>
                 </Dialog>
+            </div>
+
+            <div className="flex items-center w-full max-w-sm relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                    placeholder="Search Product by name, SKU or description..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                />
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">

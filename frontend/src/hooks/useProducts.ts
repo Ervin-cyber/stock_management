@@ -3,15 +3,15 @@ import type { ProductFormValues } from "@/schemas/product.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-export const useProducts = () => {
+export const useProducts = (options: { search?: string } = {}) => {
     const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
     const limit = 10;
 
     const productsQuery = useQuery({
-        queryKey: ['products', page],
-        queryFn: () => fetchProducts(false, page, limit),
+        queryKey: ['products', page, options.search],
+        queryFn: () => fetchProducts(false, page, limit, options.search),
     });
 
     const createMutation = useMutation({

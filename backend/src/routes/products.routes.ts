@@ -8,15 +8,27 @@ export default async function productRoutes(app: FastifyInstance) {
     app.get('/', async (request: FastifyRequest<PaginationParams>, reply: FastifyReply) => {
         const isAll = request.query.all === 'true';
 
+        const search = request.query.search;
+
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
 
         const skip = (page - 1) * limit;
 
+        const whereClause: any = { deletedAt: null };
+
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { sku: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
         const [totalCount, products] = await prisma.$transaction([
-            prisma.product.count({ where: { deletedAt: null } }),
+            prisma.product.count({ where: whereClause }),
             prisma.product.findMany({
-                where: { deletedAt: null },
+                where: whereClause,
                 orderBy: { name: 'asc' },
                 skip: isAll ? undefined : skip,
                 take: isAll ? undefined : limit,

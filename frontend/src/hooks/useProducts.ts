@@ -2,6 +2,7 @@ import { createProduct, deleteProduct, fetchProductDetails, fetchProducts, updat
 import type { ProductFormValues } from "@/schemas/product.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const useProducts = (options: { search?: string } = {}) => {
     const queryClient = useQueryClient();
@@ -19,14 +20,34 @@ export const useProducts = (options: { search?: string } = {}) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+
+            toast.success('Successful operation!', {
+                description: 'The product has been successfully added to the system.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be created.';
+            toast.error('Error while saving!', {
+                description: errorMessage,
+            });
+        }
     });
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string, data: ProductFormValues }) => updateProduct(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
+
+            toast.success('Successful operation!', {
+                description: 'The product has been successfully updated.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be updated.';
+            toast.error('Error while updating!', {
+                description: errorMessage,
+            });
+        }
     });
 
     const deleteMutation = useMutation({
@@ -34,7 +55,17 @@ export const useProducts = (options: { search?: string } = {}) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+
+            toast.success('Successful operation!', {
+                description: 'The product has been successfully deleted.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be deleted.';
+            toast.error('Error while deleting!', {
+                description: errorMessage,
+            });
+        }
     });
 
     return {
@@ -51,11 +82,9 @@ export const useProducts = (options: { search?: string } = {}) => {
 
         updateProduct: updateMutation.mutateAsync,
         isUpdating: updateMutation.isPending,
-        updateError: updateMutation.error,
 
         deleteProduct: deleteMutation.mutateAsync,
         isDeleting: deleteMutation.isPending,
-        deleteError: deleteMutation.error,
     }
 }
 export const useProductDetails = (productId: string | null) => {

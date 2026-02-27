@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -21,10 +22,35 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        const token = useAuthStore.getState().token;
-        if (error.response?.status === 401 && token) {
-            useAuthStore.getState().logout();
-            window.location.href = '/login';
+        const status = error.response.status;
+        const serverMessage = error.response.data?.error || error.response.data?.message;
+
+        const token = useAuthStore.getState()?.token;
+        const originalRequestUrl = error.config?.url;
+        if (error.response) {
+
+
+            if (status === 401 && token && !originalRequestUrl?.includes('/login')) {
+                useAuthStore.getState().logout();
+                toast.error('The session has expired!', {
+                    description: 'Please log in again to continue.',
+                    duration: 8000,
+                });
+            } else if (status === 403) {
+
+                toast.warning('No permission!', {
+                    description: serverMessage || 'This operation requires administrator rights.',
+                });
+
+            } /*else {
+                toast.error('An error occurred!', {
+                    description: serverMessage || 'An unexpected error occurred during the API call.',
+                });
+            }*/
+        } else if (error.request) {
+            toast.error('Network error!', {
+                description: 'Unable to connect to the server. Check your internet connection.',
+            });
         }
         return Promise.reject(error);
     }

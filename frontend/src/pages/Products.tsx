@@ -40,7 +40,7 @@ export default function Products() {
     const userRole = useAuthStore((state) => state.user?.role);
     const isAdmin = userRole === 'ADMIN';
 
-    const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, isUpdating, updateError, deleteProduct, isDeleting, deleteError } = useProducts({ search: debouncedSearch });
+    const { products, meta, page, setPage, isLoading, isCreating, createProduct, productsError, updateProduct, deleteProduct, isDeleting } = useProducts({ search: debouncedSearch });
 
     useEffect(() => {
         setPage(1);

@@ -31,7 +31,7 @@ export default function Warehouses() {
 
     const [warehouseToDelete, setWarehouseToDelete] = useState<string | null>(null);
 
-    const { warehouses, meta, page, setPage, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, isUpdating, updateError, deleteWarehouse, isDeleting, deleteError } = useWarehouses();
+    const { warehouses, meta, page, setPage, isLoading, isCreating, createWarehouse, warehousesError, updateWarehouse, deleteWarehouse, isDeleting } = useWarehouses();
 
     const userRole = useAuthStore((state) => state.user?.role);
     const isAdmin = userRole === 'ADMIN';

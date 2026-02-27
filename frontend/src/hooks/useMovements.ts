@@ -4,6 +4,7 @@ import { fetchWarehouses } from "@/api/warehouses.api";
 import type { MovementFormValues } from "@/schemas/movement.schema";
 import type { MovementFilters } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const useMovements = (filters: MovementFilters = {}) => {
     const queryClient = useQueryClient();
@@ -36,7 +37,17 @@ export const useMovements = (filters: MovementFilters = {}) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['movements'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+
+            toast.success('Successful operation!', {
+                description: 'The stock movement has been successfully added to the system.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The stock movement could not be created.';
+            toast.error('Error while saving!', {
+                description: errorMessage,
+            });
+        }
     });
 
     return {
@@ -50,6 +61,5 @@ export const useMovements = (filters: MovementFilters = {}) => {
 
         createMovement: createMutation.mutateAsync,
         isCreating: createMutation.isPending,
-        createError: createMutation.error,
     }
 }

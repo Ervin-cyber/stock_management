@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Warehouses from './pages/Warehouses'
 import Products from './pages/Products'
 import Movements from './pages/Movements'
+import { Toaster } from 'sonner'
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   )
 }

@@ -2,6 +2,7 @@ import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } fr
 import type { WarehouseFormValues } from "@/schemas/warehouse.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const useWarehouses = () => {
     const queryClient = useQueryClient();
@@ -19,14 +20,34 @@ export const useWarehouses = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['warehouses'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+
+            toast.success('Successful operation!', {
+                description: 'The warehouse has been successfully added to the system.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The warehouse could not be created.';
+            toast.error('Error while saving!', {
+                description: errorMessage,
+            });
+        }
     });
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: WarehouseFormValues }) => updateWarehouse(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['warehouses'] });
+
+            toast.success('Successful operation!', {
+                description: 'The warehouse has been successfully updated.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The warehouse could not be updated.';
+            toast.error('Error while updating!', {
+                description: errorMessage,
+            });
+        }
     });
 
     const deleteMutation = useMutation({
@@ -34,7 +55,17 @@ export const useWarehouses = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['warehouses'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+
+            toast.success('Successful operation!', {
+                description: 'The warehouse has been successfully deleted.',
+            });
         },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The warehouse could not be deleted.';
+            toast.error('Error while deleting!', {
+                description: errorMessage,
+            });
+        }
     });
 
     return {
@@ -51,10 +82,8 @@ export const useWarehouses = () => {
 
         updateWarehouse: updateMutation.mutateAsync,
         isUpdating: updateMutation.isPending,
-        updateError: updateMutation.error,
 
         deleteWarehouse: deleteMutation.mutateAsync,
         isDeleting: deleteMutation.isPending,
-        deleteError: updateMutation.error,
     };
 }

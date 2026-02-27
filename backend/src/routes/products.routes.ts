@@ -30,6 +30,37 @@ export default async function productRoutes(app: FastifyInstance) {
         });
     });
 
+    app.get('/:id', async (request: FastifyRequest<{ Params: IdentifierParam }>, reply: FastifyReply) => {
+        const { id } = request.params ?? {};
+
+        const product = await prisma.product.findUnique({
+            where: { id },
+            include: {
+                stocks: {
+                    include: {
+                        warehouse: { select: { name: true, location: true } }
+                    }
+                },
+                movements: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 5,
+                    include: {
+                        sourceWarehouse: { select: { name: true } },
+                        destinationWarehouse: { select: { name: true } },
+                        createdBy: { select: { name: true } }
+                    }
+                }
+            }
+        });
+
+        if (!product || product.deletedAt) {
+            return reply.status(404).send({ success: false, error: 'Product not found.' });
+        }
+
+        return reply.send({ success: true, data: product });
+    });
+
+
     app.post('/', async (
         request: FastifyRequest<{ Body: UpsertProductBody }>,
         reply: FastifyReply

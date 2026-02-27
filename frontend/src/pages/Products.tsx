@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,9 +20,13 @@ import { useProducts } from '@/hooks/useProducts';
 import type { Product } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DataTablePagination from '@/components/DataTablePagination';
+import ProductDetailSheet from '@/components/ProductDetailSheet';
+import ActionTooltip from '@/components/ActionTooltip';
 
 export default function Products() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -196,29 +200,45 @@ export default function Products() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setEditingProduct(product);
-                                                        form.reset({
-                                                            sku: product.sku || '',
-                                                            name: product.name || '',
-                                                            description: product.description || ''
-                                                        });
-                                                        setIsDialogOpen(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4 text-blue-600" />
-                                                </Button>
+                                                <ActionTooltip label="View Product Details">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setSelectedProductId(product.id)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Eye className="h-4 w-4 text-slate-600" />
+                                                    </Button>
+                                                </ActionTooltip>
+                                                <ActionTooltip label="Edit Product">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setEditingProduct(product);
+                                                            form.reset({
+                                                                sku: product.sku || '',
+                                                                name: product.name || '',
+                                                                description: product.description || ''
+                                                            });
+                                                            setIsDialogOpen(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Pencil className="h-4 w-4 text-blue-600" />
+                                                    </Button>
+                                                </ActionTooltip>
 
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setProductToDelete(product.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-rose-600" />
-                                                </Button>
+                                                <ActionTooltip label="Delete Product">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setProductToDelete(product.id)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-rose-600" />
+                                                    </Button>
+                                                </ActionTooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -241,6 +261,11 @@ export default function Products() {
                 description="This operation cannot be undone."
                 confirmText="Delete"
                 isLoading={isDeleting}
+            />
+            <ProductDetailSheet
+                productId={selectedProductId}
+                isOpen={!!selectedProductId}
+                onClose={() => setSelectedProductId(null)}
             />
         </div>
     );

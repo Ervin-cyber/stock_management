@@ -21,6 +21,7 @@ import { formatDate } from '@/utils/formatter';
 import type { Warehouse } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DataTablePagination from '@/components/DataTablePagination';
+import ActionTooltip from '@/components/ActionTooltip';
 
 export default function Warehouses() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -183,28 +184,34 @@ export default function Warehouses() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setEditingWarehouse(warehouse);
-                                                        form.reset({
-                                                            name: warehouse.name || '',
-                                                            location: warehouse.location || ''
-                                                        });
-                                                        setIsDialogOpen(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4 text-blue-600" />
-                                                </Button>
+                                                <ActionTooltip label="Edit Warehouse">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setEditingWarehouse(warehouse);
+                                                            form.reset({
+                                                                name: warehouse.name || '',
+                                                                location: warehouse.location || ''
+                                                            });
+                                                            setIsDialogOpen(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Pencil className="h-4 w-4 text-blue-600" />
+                                                    </Button>
+                                                </ActionTooltip>
 
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setWarehouseToDelete(warehouse.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-rose-600" />
-                                                </Button>
+                                                <ActionTooltip label="Delete Warehouse">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setWarehouseToDelete(warehouse.id)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-rose-600" />
+                                                    </Button>
+                                                </ActionTooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>

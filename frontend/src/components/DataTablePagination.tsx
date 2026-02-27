@@ -1,4 +1,3 @@
-// src/components/common/DataTablePagination.tsx
 import {
     Pagination,
     PaginationContent,
@@ -6,12 +5,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-
-interface DataTablePaginationProps {
-    currentPage: number;
-    totalPages: number;
-    onPageChange: (page: number) => void;
-}
+import type { DataTablePaginationProps } from "@/types";
 
 export default function DataTablePagination({
     currentPage,

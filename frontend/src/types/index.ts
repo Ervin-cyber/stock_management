@@ -69,3 +69,15 @@ export interface Stats {
     totalWarehouses: number;
     lowStockItems: number;
 }
+
+export interface ProductDetailSheetProps {
+    productId: string | null;
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export interface DataTablePaginationProps {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+}

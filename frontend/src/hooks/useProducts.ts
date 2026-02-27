@@ -1,4 +1,4 @@
-import { createProduct, deleteProduct, fetchProducts, updateProduct } from "@/api/products.api";
+import { createProduct, deleteProduct, fetchProductDetails, fetchProducts, updateProduct } from "@/api/products.api";
 import type { ProductFormValues } from "@/schemas/product.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -58,3 +58,10 @@ export const useProducts = () => {
         deleteError: deleteMutation.error,
     }
 }
+export const useProductDetails = (productId: string | null) => {
+    return useQuery({
+        queryKey: ['product', productId],
+        queryFn: () => productId ? fetchProductDetails(productId) : null,
+        enabled: !!productId,
+    });
+};

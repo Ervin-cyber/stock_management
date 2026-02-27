@@ -7,6 +7,11 @@ export const fetchProducts = async (all = false, page = 1, limit = 10): Promise<
     return response.data;
 };
 
+export const fetchProductDetails = async (id: string) => {
+    const response = await api.get(`/products/${id}`);
+    return response.data.data;
+};
+
 export const createProduct = async (data: ProductFormValues) => {
     const response = await api.post('/products', data);
     return response.data;

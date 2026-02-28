@@ -24,6 +24,8 @@ export interface CreateMovementBody {
     stockQuantity: number;
     sourceWarehouseId?: string;
     destinationWarehouseId?: string;
+    description?: string;
+    reference?: string;
 }
 
 export interface IdentifierParam {

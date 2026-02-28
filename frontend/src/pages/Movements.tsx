@@ -124,7 +124,7 @@ export default function Movements() {
                         <div className="relative flex-1 w-full max-w-md">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input
-                                placeholder="Search Product by name or SKU..."
+                                placeholder="Search by Movement reference, Product name or SKU..."
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 className="pl-9 bg-white"

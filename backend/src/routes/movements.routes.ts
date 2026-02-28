@@ -68,12 +68,17 @@ export default async function movementRoutes(app: FastifyInstance) {
         if (sourceWarehouseId && destinationWarehouseId && sourceWarehouseId !== 'ALL' && destinationWarehouseId === sourceWarehouseId) throw new AppError('Destination must be different from source.');
 
         if (search) {
-            whereClause.product = {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { sku: { contains: search, mode: 'insensitive' } }
-                ]
-            };
+            whereClause.OR = [
+                { reference: { contains: search, mode: 'insensitive' } },
+                {
+                    product: {
+                        OR: [
+                            { name: { contains: search, mode: 'insensitive' } },
+                            { sku: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                }
+            ];
         }
 
         if (startDate || endDate) {
@@ -118,7 +123,7 @@ export default async function movementRoutes(app: FastifyInstance) {
             throw new AppError('Forbidden: Insufficient permissions.', 403);
         }
 
-        let { productId, movementType, stockQuantity, sourceWarehouseId, destinationWarehouseId } = request.body ?? {};
+        let { productId, movementType, stockQuantity, sourceWarehouseId, destinationWarehouseId, description, reference } = request.body ?? {};
         const userId = request.user.id;
 
         //sanitization
@@ -212,7 +217,9 @@ export default async function movementRoutes(app: FastifyInstance) {
                     sourceWarehouseId,
                     destinationWarehouseId,
                     stockQuantity,
-                    createdById: userId
+                    createdById: userId,
+                    description,
+                    reference
                 }
             })
 

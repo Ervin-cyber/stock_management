@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Building2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useWarehouses } from '@/hooks/useWarehouses';
+import { useWarehouseMutations, useWarehouses } from '@/hooks/useWarehouses';
 import type { Warehouse } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DataTablePagination from '@/components/DataTablePagination';
@@ -20,11 +20,13 @@ export default function Warehouses() {
 
     const [warehouseToDelete, setWarehouseToDelete] = useState<string | null>(null);
 
-    const { warehouses, meta, isLoading, isErrored, deleteWarehouse, isDeleting } = useWarehouses({
+    const { warehouses, meta, isLoading, isErrored } = useWarehouses({
         page,
         sortBy,
         sortOrder
     });
+
+    const { deleteWarehouse, isDeleting } = useWarehouseMutations();
 
     useEffect(() => {
         setPage(1);

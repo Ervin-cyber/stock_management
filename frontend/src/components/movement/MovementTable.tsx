@@ -11,11 +11,7 @@ export default function MovementTable({
     isErrored,
     sortBy,
     sortOrder,
-    onSort,
-    onEdit,
-    onDelete,
-    onView,
-    hasPermission
+    onSort
 }: DataTableProps<Movement>) {
 
     if (isLoading) {

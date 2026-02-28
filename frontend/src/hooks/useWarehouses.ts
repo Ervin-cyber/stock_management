@@ -5,12 +5,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useWarehouses = (options: FetchOptions = {}) => {
-    const queryClient = useQueryClient();
-
     const warehousesQuery = useQuery({
         queryKey: ['warehouses', options.all ? 'all' : options.page, options.search, options.sortBy, options.sortOrder],
         queryFn: () => fetchWarehouses(options),
     });
+
+    return {
+        warehouses: warehousesQuery.data?.data || [],
+        isLoading: warehousesQuery.isLoading,
+        isErrored: warehousesQuery.isError,
+        meta: warehousesQuery.data?.meta,
+    };
+}
+
+export const useWarehouseMutations = () => {
+    const queryClient = useQueryClient();
 
     const createMutation = useMutation({
         mutationFn: (data: WarehouseFormValues) => createWarehouse(data),
@@ -66,11 +75,6 @@ export const useWarehouses = (options: FetchOptions = {}) => {
     });
 
     return {
-        warehouses: warehousesQuery.data?.data || [],
-        isLoading: warehousesQuery.isLoading,
-        isErrored: warehousesQuery.isError,
-        meta: warehousesQuery.data?.meta,
-
         createWarehouse: createMutation.mutateAsync,
         isCreating: createMutation.isPending,
         createError: createMutation.error,
@@ -80,5 +84,5 @@ export const useWarehouses = (options: FetchOptions = {}) => {
 
         deleteWarehouse: deleteMutation.mutateAsync,
         isDeleting: deleteMutation.isPending,
-    };
+    }
 }

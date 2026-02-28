@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import ActionTooltip from '@/components/ActionTooltip';
 import MovementDialog from '@/components/movement/MovementDialog';
 import MovementTable from '@/components/movement/MovementTable';
+import type { Warehouse } from '@/types';
 
 export default function Movements() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -175,7 +176,7 @@ export default function Movements() {
                                     <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">ALL</SelectItem>
-                                        {warehouses.map(w => (
+                                        {warehouses.map((w: Warehouse) => (
                                             <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -188,7 +189,7 @@ export default function Movements() {
                                     <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">ALL</SelectItem>
-                                        {warehouses.map(w => (
+                                        {warehouses.map((w: Warehouse) => (
                                             <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                                         ))}
                                     </SelectContent>

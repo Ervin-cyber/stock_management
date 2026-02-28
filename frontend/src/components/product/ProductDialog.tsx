@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { useProducts } from '@/hooks/useProducts';
+import { useProductMutations } from '@/hooks/useProducts';
 import { useEffect } from 'react';
 import type { EditDialogProps } from '@/types';
 
 export default function ProductDialog({ isOpen, onClose, editingItem }: EditDialogProps) {
-    const { createProduct, updateProduct, isCreating } = useProducts();
+    const { createProduct, updateProduct, isCreating } = useProductMutations();
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),

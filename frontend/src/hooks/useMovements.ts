@@ -7,12 +7,29 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useMovements = (options: MovementOptions = {}) => {
-    const queryClient = useQueryClient();
-
     const movementsQuery = useQuery({
         queryKey: ['movements', options.page, options.type, options.sourceWarehouseId, options.destinationWarehouseId, options.search, options.startDate, options.endDate, options.sortBy, options.sortOrder],
         queryFn: () => fetchMovements(options),
     });
+
+    const warehousesQuery = useQuery({
+        queryKey: ['warehouses'],
+        queryFn: () => fetchWarehouses({ all: true })
+    });
+
+    return {
+        movements: movementsQuery.data?.data || [],
+        isLoading: movementsQuery.isLoading,
+        isErrored: movementsQuery.isError,
+        meta: movementsQuery.data?.meta,
+
+        warehouses: warehousesQuery.data?.data || [],
+    }
+}
+
+export const useMovementMutations = () => {
+    const queryClient = useQueryClient();
+
     const productsQuery = useQuery({
         queryKey: ['products'],
         queryFn: () => fetchProducts({ all: true })
@@ -51,15 +68,10 @@ export const useMovements = (options: MovementOptions = {}) => {
     });
 
     return {
-        movements: movementsQuery.data?.data || [],
-        isLoading: movementsQuery.isLoading,
-        isErrored: movementsQuery.isError,
-        meta: movementsQuery.data?.meta,
+        createMovement: createMutation.mutateAsync,
+        isCreating: createMutation.isPending,
 
         products: productsQuery.data?.data || [],
         warehouses: warehousesQuery.data?.data || [],
-
-        createMovement: createMutation.mutateAsync,
-        isCreating: createMutation.isPending,
     }
 }

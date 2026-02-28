@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Package, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useProducts } from '@/hooks/useProducts';
+import { useProductMutations, useProducts } from '@/hooks/useProducts';
 import type { Product } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ActionTooltip from '@/components/ActionTooltip';
@@ -31,12 +31,14 @@ export default function Products() {
     const userRole = useAuthStore((state) => state.user?.role);
     const isAdmin = userRole === 'ADMIN';
 
-    const { products, isLoading, isErrored, meta, deleteProduct, isDeleting } = useProducts({
+    const { products, isLoading, isErrored, meta } = useProducts({
         page,
         search: debouncedSearch,
         sortBy,
         sortOrder
     });
+
+    const { deleteProduct, isDeleting } = useProductMutations();
 
     useEffect(() => {
         setPage(1);

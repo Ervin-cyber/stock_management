@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { useEffect } from 'react';
-import { useWarehouses } from '@/hooks/useWarehouses';
+import { useWarehouseMutations } from '@/hooks/useWarehouses';
 import { warehouseSchema, type WarehouseFormValues } from '@/schemas/warehouse.schema';
 import type { EditDialogProps } from '@/types';
 
 export default function WarehouseDialog({ isOpen, onClose, editingItem }: EditDialogProps) {
-    const { createWarehouse, updateWarehouse, isCreating } = useWarehouses();
+    const { createWarehouse, updateWarehouse, isCreating } = useWarehouseMutations();
 
     // Form initialization
     const form = useForm<WarehouseFormValues>({

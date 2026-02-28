@@ -5,12 +5,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useProducts = (options: FetchOptions = {}) => {
-    const queryClient = useQueryClient();
-
     const productsQuery = useQuery({
         queryKey: ['products', options.all ? 'all' : options.page, options.search, options.sortBy, options.sortOrder],
         queryFn: () => fetchProducts(options),
     });
+
+    return {
+        products: productsQuery.data?.data || [],
+        isLoading: productsQuery.isLoading,
+        isErrored: productsQuery.isError,
+        meta: productsQuery.data?.meta,
+    }
+}
+
+export const useProductMutations = () => {
+    const queryClient = useQueryClient();
 
     const createMutation = useMutation({
         mutationFn: (data: ProductFormValues) => createProduct(data),
@@ -23,7 +32,7 @@ export const useProducts = (options: FetchOptions = {}) => {
             });
         },
         onError: (error: any) => {
-            const errorMessage = error.response?.data?.error?.message|| 'The product could not be created.';
+            const errorMessage = error.response?.data?.error?.message || 'The product could not be created.';
             toast.error('Error while saving!', {
                 description: errorMessage,
             });
@@ -66,11 +75,6 @@ export const useProducts = (options: FetchOptions = {}) => {
     });
 
     return {
-        products: productsQuery.data?.data || [],
-        isLoading: productsQuery.isLoading,
-        isErrored: productsQuery.isError,
-        meta: productsQuery.data?.meta,
-
         createProduct: createMutation.mutateAsync,
         isCreating: createMutation.isPending,
         createError: createMutation.error,
@@ -82,6 +86,7 @@ export const useProducts = (options: FetchOptions = {}) => {
         isDeleting: deleteMutation.isPending,
     }
 }
+
 export const useProductDetails = (productId: string | null) => {
     return useQuery({
         queryKey: ['product', productId],

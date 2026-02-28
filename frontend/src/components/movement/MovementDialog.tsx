@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import type { EditDialogProps } from '@/types';
-import { useMovements } from '@/hooks/useMovements';
+import { useMovementMutations } from '@/hooks/useMovements';
 import { movementSchema, type MovementFormValues } from '@/schemas/movement.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function MovementDialog({ isOpen, onClose, editingItem }: EditDialogProps) {
-    const { createMovement, isCreating, products, warehouses } = useMovements();
+export default function MovementDialog({ isOpen, onClose }: EditDialogProps) {
+    const { createMovement, isCreating, products, warehouses } = useMovementMutations();
 
     const form = useForm<MovementFormValues>({
         resolver: zodResolver(movementSchema) as any,

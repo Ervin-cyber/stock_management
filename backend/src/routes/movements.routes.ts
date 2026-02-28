@@ -144,6 +144,10 @@ export default async function movementRoutes(app: FastifyInstance) {
         }
 
         const result = await prisma.$transaction(async (tx) => {
+            if (movementType === 'OUT' || movementType === 'TRANSFER') { //race condition Pessimistic Lock / Row Lock
+                await tx.$executeRaw`SELECT * FROM "Stock" WHERE "productId" = ${productId} AND "warehouseId" = ${sourceWarehouseId} FOR UPDATE`;
+            }
+
             if (movementType === 'IN') {
                 if (!destinationWarehouseId) throw new AppError('Destination warehouse is required for IN movement.');
 

@@ -41,7 +41,7 @@ export default function Login() {
             
             navigate('/');
         } catch (error: any) {
-            const errorMessage = error.response?.data?.error || "Unexpected server error occurred.";
+            const errorMessage = error.response?.data?.error?.message || "Unexpected server error occurred.";
             setServerError(errorMessage);
         }
     };

@@ -23,7 +23,7 @@ export const useProducts = (options: FetchOptions = {}) => {
             });
         },
         onError: (error: any) => {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be created.';
+            const errorMessage = error.response?.data?.error?.message|| 'The product could not be created.';
             toast.error('Error while saving!', {
                 description: errorMessage,
             });
@@ -40,7 +40,7 @@ export const useProducts = (options: FetchOptions = {}) => {
             });
         },
         onError: (error: any) => {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be updated.';
+            const errorMessage = error.response?.data?.error?.message || 'The product could not be updated.';
             toast.error('Error while updating!', {
                 description: errorMessage,
             });
@@ -58,7 +58,7 @@ export const useProducts = (options: FetchOptions = {}) => {
             });
         },
         onError: (error: any) => {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The product could not be deleted.';
+            const errorMessage = error.response?.data?.error?.message || 'The product could not be deleted.';
             toast.error('Error while deleting!', {
                 description: errorMessage,
             });

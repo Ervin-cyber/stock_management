@@ -23,7 +23,7 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         const status = error.response.status;
-        const serverMessage = error.response.data?.error || error.response.data?.message;
+        const serverMessage = error.response.data?.error?.message;// || error.response.data?.message;
 
         const token = useAuthStore.getState()?.token;
         const originalRequestUrl = error.config?.url;
@@ -42,11 +42,13 @@ api.interceptors.response.use(
                     description: serverMessage || 'This operation requires administrator rights.',
                 });
 
-            } /*else {
-                toast.error('An error occurred!', {
-                    description: serverMessage || 'An unexpected error occurred during the API call.',
+            } else if (status === 429) {
+
+                toast.warning('Too many requests!', {
+                    description: serverMessage || 'Too many requests!',
                 });
-            }*/
+
+            }
         } else if (error.request) {
             toast.error('Network error!', {
                 description: 'Unable to connect to the server. Check your internet connection.',

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../lib/prisma';
 import { FetchQueryParams, IdentifierParam, UpsertProductBody } from '../types';
+import { AppError } from '../utils/AppError';
 
 export default async function productRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
@@ -90,7 +91,7 @@ export default async function productRoutes(app: FastifyInstance) {
         });
 
         if (!product || product.deletedAt) {
-            return reply.status(404).send({ success: false, error: 'Product not found.' });
+            throw new AppError('Product not found.', 404);
         }
 
         return reply.send({ success: true, data: product });
@@ -102,19 +103,19 @@ export default async function productRoutes(app: FastifyInstance) {
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required.' });
+            throw new AppError('Forbidden: Admin access required.', 403);
         }
 
         const { sku, name, description } = request.body ?? {};
         const userId = request.user.id;
 
         if (!sku || !name) {
-            return reply.status(400).send({ success: false, error: 'SKU and name are required.' });
+            throw new AppError('SKU and name are required.', 400);
         }
 
         const skuExists = await prisma.product.findUnique({ where: { sku } });
         if (skuExists) {
-            return reply.status(409).send({ success: false, error: 'A product with this SKU already exists.' });
+            throw new AppError('A product with this SKU already exists.', 409);
         }
 
         const newProduct = await prisma.product.create({
@@ -129,7 +130,7 @@ export default async function productRoutes(app: FastifyInstance) {
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required.' });
+            throw new AppError('Forbidden: Admin access required.', 403);
         }
 
         const { id } = request.params ?? {};
@@ -138,13 +139,13 @@ export default async function productRoutes(app: FastifyInstance) {
 
         const existing = await prisma.product.findUnique({ where: { id } });
         if (!existing || existing.deletedAt) {
-            return reply.status(404).send({ success: false, error: 'Product not found.' });
+            throw new AppError('Product not found.', 404);
         }
 
         if (sku && sku !== existing.sku) {
             const skuTaken = await prisma.product.findUnique({ where: { sku } });
             if (skuTaken) {
-                return reply.status(409).send({ success: false, error: 'A product with this SKU already exists.' });
+                throw new AppError('A product with this SKU already exists.', 409);
             }
         }
 
@@ -166,7 +167,7 @@ export default async function productRoutes(app: FastifyInstance) {
         reply: FastifyReply
     ) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required.' });
+            throw new AppError('Forbidden: Admin access required.', 403);
         }
 
         const { id } = request.params ?? {};
@@ -174,7 +175,7 @@ export default async function productRoutes(app: FastifyInstance) {
 
         const existing = await prisma.product.findUnique({ where: { id } });
         if (!existing || existing.deletedAt) {
-            return reply.status(404).send({ success: false, error: 'Product not found.' });
+            throw new AppError('Product not found.', 404);
         }
 
         const activeStock = await prisma.stock.findFirst({
@@ -185,10 +186,7 @@ export default async function productRoutes(app: FastifyInstance) {
         });
 
         if (activeStock) {
-            return reply.status(400).send({
-                success: false,
-                error: 'Cannot delete product. There is still active stock in one or more warehouses. Please remove all items first.'
-            });
+            throw new AppError('Cannot delete product. There is still active stock in one or more warehouses. Please remove all items first.', 400);
         }
 
         await prisma.product.update({ // soft delete

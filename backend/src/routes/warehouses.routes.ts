@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 import { FetchQueryParams, IdentifierParam, UpsertWarehouseBody } from "../types";
+import { AppError } from "../utils/AppError";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
@@ -55,25 +56,25 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
     app.post('/', async (request: FastifyRequest<{ Body: UpsertWarehouseBody }>, reply) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to create a warehouse.' });
+            throw new AppError('Forbidden: Admin access required to create a warehouse.', 403);
         }
 
         const { name, location } = request.body ?? {};
         const userId = request.user.id;
 
         if (!name) {
-            return reply.status(400).send({ success: false, error: 'Warehouse name is required.' });
+            throw new AppError('Warehouse name is required.', 400);
         }
 
         if (!location) {
-            return reply.status(400).send({ success: false, error: 'Warehouse location is required.' });
+            throw new AppError('Warehouse location is required.', 400);
         }
 
         const nameExists = await prisma.warehouse.findUnique({
             where: { name }
         });
         if (nameExists) {
-            return reply.status(409).send({ success: false, error: 'A warehouse with this name already exists.' });
+            throw new AppError('A warehouse with this name already exists.', 409);
         }
 
         const newWarehouse = await prisma.warehouse.create({
@@ -87,7 +88,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         request: FastifyRequest<{ Params: IdentifierParam; Body: UpsertWarehouseBody }>,
         reply) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to update a warehouse.' });
+            throw new AppError('Forbidden: Admin access required to update a warehouse.', 403);
         }
 
         const { id } = request.params ?? {};
@@ -96,13 +97,13 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing || existing.deletedAt) {
-            return reply.status(404).send({ success: false, error: 'Warehouse not found.' });
+            throw new AppError('Warehouse not found.', 404);
         }
 
         if (name && name !== existing.name) {
             const nameConflict = await prisma.warehouse.findUnique({ where: { name } });
             if (nameConflict) {
-                return reply.status(409).send({ success: false, error: 'A warehouse with this name already exists.' });
+                throw new AppError('A warehouse with this name already exists.', 409);
             }
         }
 
@@ -123,7 +124,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         request: FastifyRequest<{ Params: IdentifierParam }>,
         reply) => {
         if (request.user.role !== 'ADMIN') {
-            return reply.status(403).send({ success: false, error: 'Forbidden: Admin access required to delete a warehouse.' });
+            throw new AppError('Forbidden: Admin access required to delete a warehouse.', 403);
         }
 
         const { id } = request.params ?? {};
@@ -131,7 +132,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
 
         const existing = await prisma.warehouse.findUnique({ where: { id } });
         if (!existing) {
-            return reply.status(404).send({ success: false, error: 'Warehouse not found.' });
+            throw new AppError('Warehouse not found.', 404);
         }
 
         const activeStock = await prisma.stock.findFirst({
@@ -142,10 +143,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         });
 
         if (activeStock) {
-            return reply.status(400).send({
-                success: false,
-                error: 'Cannot delete warehouse. It still contains active stock. Please transfer or remove all items first.'
-            });
+            throw new AppError('Cannot delete warehouse. It still contains active stock. Please transfer or remove all items first.', 400);
         }
 
         await prisma.warehouse.update({ // soft delete

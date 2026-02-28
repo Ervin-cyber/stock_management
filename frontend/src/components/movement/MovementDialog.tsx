@@ -45,7 +45,7 @@ export default function MovementDialog({ isOpen, onClose, editingItem }: EditDia
 
             onClose();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+            const errorMessage = error.response?.data?.error?.message || "An unexpected error occurred.";
 
             form.setError('root', {
                 type: 'server',

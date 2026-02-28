@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
 import { LoginBody } from "../types";
+import { AppError } from "../utils/AppError";
 
 export default async function authRoutes(app: FastifyInstance) {
     app.post('/login', async (
@@ -10,7 +11,7 @@ export default async function authRoutes(app: FastifyInstance) {
         const { email, password } = request.body ?? {};
 
         if (!email || !password) {
-            return reply.status(400).send({ error: "Email and password are required!" });
+            throw new AppError('Email and password are required!', 400);
         }
 
         const user = await prisma.user.findUnique({
@@ -20,13 +21,13 @@ export default async function authRoutes(app: FastifyInstance) {
         });
 
         if (!user || !user.active || user.deletedAt) {
-            return reply.status(401).send({ error: "Wrong email or password!" });
+            throw new AppError('Wrong email or password!', 401);
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            return reply.status(401).send({ error: "Wrong email or password!" });
+            throw new AppError('Wrong email or password!', 401);
         }
 
         const token = app.jwt.sign({
@@ -61,7 +62,7 @@ export default async function authRoutes(app: FastifyInstance) {
         });
 
         if (!user) {
-            return reply.status(404).send({ success: false, error: 'User not found!' });
+            throw new AppError('User not found!', 404);
         }
 
         return reply.send({ success: true, user });

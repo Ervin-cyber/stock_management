@@ -43,7 +43,7 @@ export const useMovements = (options: MovementOptions = {}) => {
             });
         },
         onError: (error: any) => {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'The stock movement could not be created.';
+            const errorMessage = error.response?.data?.error?.message || 'The stock movement could not be created.';
             toast.error('Error while saving!', {
                 description: errorMessage,
             });

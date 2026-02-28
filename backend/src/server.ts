@@ -13,6 +13,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 import movementRoutes from './routes/movements.routes';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { AppError } from './utils/AppError';
+import userRoutes from './routes/user.routes';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
@@ -36,6 +37,7 @@ app.register(authPlugin);
 app.register(errorHandler)
 
 app.register(authRoutes, { prefix: '/api/auth' });
+app.register(userRoutes, { prefix: '/api/users' });
 app.register(productRoutes, { prefix: '/api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
 app.register(movementRoutes, { prefix: '/api/movements' });

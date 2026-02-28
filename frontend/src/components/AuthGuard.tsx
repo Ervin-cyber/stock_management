@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { api } from '@/api/axios';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 export default function AuthGuard() {
     const { logout } = useAuthStore();
@@ -17,8 +18,13 @@ export default function AuthGuard() {
         retry: false,
     });
 
+    useEffect(() => {
+        if (isError) {
+            logout();
+        }
+    }, [isError, logout]);
+
     if (isError) {
-        logout();
         return <Navigate to="/login" replace />;
     }
 

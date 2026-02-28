@@ -20,8 +20,12 @@ export default async function authRoutes(app: FastifyInstance) {
             }
         });
 
-        if (!user || !user.active || user.deletedAt) {
+        if (!user || user.deletedAt) {
             throw new AppError('Wrong email or password!', 401);
+        }
+
+        if (user && user.active === false) {
+            throw new AppError('Your account has been suspended. Please contact the administrator.', 403);
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);

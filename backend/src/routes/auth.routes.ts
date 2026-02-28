@@ -1,8 +1,10 @@
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
 import { LoginBody } from "../types";
 import { AppError } from "../utils/AppError";
+import { sendVerificationEmail } from "../utils/mailer";
+import crypto from 'crypto';
 
 export default async function authRoutes(app: FastifyInstance) {
     app.post('/login', async (
@@ -70,5 +72,77 @@ export default async function authRoutes(app: FastifyInstance) {
         }
 
         return reply.send({ success: true, user });
+    });
+
+    app.post('/register', async (
+        request: FastifyRequest<{ Body: { email: string; password: string; name: string } }>,
+        reply: FastifyReply
+    ) => {
+        const { email, password, name } = request.body ?? {};
+
+        if (!email || !password || !name) {
+            throw new AppError('All fields are required!', 400);
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            throw new AppError('This email address is already registered!', 400);
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
+        const newUser = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                verificationToken,
+                role: 'VIEWER'
+            }
+        });
+
+        sendVerificationEmail(newUser.email, verificationToken).catch(console.error);
+
+        return reply.status(201).send({
+            success: true,
+            message: 'Successful registration! Please confirm your email address using the link in the email sent.'
+        });
+    });
+
+    app.post('/verify-email', async (
+        request: FastifyRequest<{ Body: { token: string } }>,
+        reply: FastifyReply
+    ) => {
+        const { token } = request.body;
+
+        if (!token) {
+            throw new AppError('Missing ID token!', 400);
+        }
+
+        const user = await prisma.user.findFirst({
+            where: { verificationToken: token }
+        });
+
+        if (!user) {
+            throw new AppError('Invalid or already used token!', 400);
+        }
+
+        if (user.active) {
+            throw new AppError('This account is already active!', 400);
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                active: true,
+                verificationToken: null
+            }
+        });
+
+        return reply.send({
+            success: true,
+            message: 'Your account has been successfully activated! You can now log in.'
+        });
     });
 }

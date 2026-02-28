@@ -10,6 +10,8 @@ import Movements from './pages/Movements'
 import { Toaster } from 'sonner'
 import UsersPage from './pages/UsersPage'
 import AdminGuard from './components/AdminGuard'
+import VerifyEmail from './pages/VerifyEmail'
+import Register from './pages/Register'
 
 const queryClient = new QueryClient();
 
@@ -19,6 +21,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           <Route element={<AuthGuard />}>
             <Route element={<DashboardLayout />}>

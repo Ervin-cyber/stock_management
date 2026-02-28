@@ -14,6 +14,7 @@ import movementRoutes from './routes/movements.routes';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { AppError } from './utils/AppError';
 import userRoutes from './routes/user.routes';
+import { sendVerificationEmail } from './utils/mailer';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 

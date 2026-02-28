@@ -26,7 +26,8 @@ model User {
   password                String      
   name                    String?     
   role                    Role      
-  active                  Boolean         @default(true)
+  active                  Boolean         @default(false)
+  verificationToken       String?
 
   // Prisma reverse relationship
   createdProducts         Product[]       @relation("ProductCreatedBy")

@@ -1,29 +1,53 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
-
+import authPlugin from './plugins/auth';
+import errorHandler from './plugins/errorHandler'
 import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from './lib/prisma';
+import authRoutes from './routes/auth.routes';
+import warehouseRoutes from './routes/warehouses.routes';
+import productRoutes from './routes/products.routes';
 
-const prisma = new PrismaClient();
-const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
+import cors from '@fastify/cors';
+import dashboardRoutes from './routes/dashboard.routes';
+import movementRoutes from './routes/movements.routes';
+import fastifyRateLimit from '@fastify/rate-limit';
+import { AppError } from './utils/AppError';
+
+export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
+
+const FRONTEND_URL = process.env.FRONTEND_URL || (() => { throw new Error('FRONTEND_URL is not set!') })()
+
+app.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (request, context) {
+        throw new AppError(`Too many requests! Please try again after ${context.after}.`, 429);
+    }
+});
+
+app.register(cors, {
+    origin: FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+});
+
+app.register(authPlugin);
+app.register(errorHandler)
+
+app.register(authRoutes, { prefix: '/api/auth' });
+app.register(productRoutes, { prefix: '/api/products' });
+app.register(warehouseRoutes, { prefix: '/api/warehouses' });
+app.register(movementRoutes, { prefix: '/api/movements' });
+app.register(dashboardRoutes, { prefix: '/api/dashboard' });
 
 app.get('/health', async (request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() })
 });
 
-app.get('/test-db', async (request, reply) => {
-    try {
-        const warehouses = await prisma.warehouse.findMany();
-        reply.send({ success: true, count: warehouses.length, data: warehouses });
-    } catch (error) {
-        app.log.error(error);
-        reply.status(500).send({ success: false, error: 'Database error' });
-    }
-});
-
 const start = async () => {
     try {
-        const port = parseInt(process.env.APP_PORT ?? '3001');
+        const port = parseInt(process.env.APP_PORT ?? '3000');
 
         await app.listen({ port, host: '0.0.0.0' }); //'0.0.0.0' docker
         console.log(`🚀 Server running at http://localhost:${port} address`);
@@ -44,4 +68,6 @@ const start = async () => {
     });
 });
 
-start();
+if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+    start();
+}

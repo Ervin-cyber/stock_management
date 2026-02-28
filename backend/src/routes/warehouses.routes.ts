@@ -1,15 +1,36 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
-import { IdentifierParam, PaginationParams, UpsertWarehouseBody } from "../types";
+import { FetchQueryParams, IdentifierParam, UpsertWarehouseBody } from "../types";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request: FastifyRequest<PaginationParams>, reply) => {
+    app.get('/', async (request: FastifyRequest<FetchQueryParams>, reply) => {
         const isAll = request.query.all === 'true';
 
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
+
+        let orderByClause: any = { createdAt: 'desc' };
+
+        const sortBy = request.query.sortBy;
+        let sortOrder = 'desc';
+
+        if (request.query.sortOrder && request.query.sortOrder.toLowerCase() === 'asc') {
+            sortOrder = 'asc';
+        }
+
+        switch (sortBy) {
+            case 'name':
+                orderByClause = { name: sortOrder };
+                break;
+            case 'location':
+                orderByClause = { location: sortOrder };
+                break;
+            case 'createdAt':
+                orderByClause = { createdAt: sortOrder };
+                break;
+        }
 
         const skip = (page - 1) * limit;
 
@@ -21,7 +42,7 @@ export default async function warehouseRoutes(app: FastifyInstance) {
                 where: {
                     deletedAt: null
                 },
-                orderBy: { createdAt: 'desc' }
+                orderBy: orderByClause,
             })
         ]);
 

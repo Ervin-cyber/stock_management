@@ -2,24 +2,24 @@ import { createMovement, fetchMovements } from "@/api/movements.api";
 import { fetchProducts } from "@/api/products.api";
 import { fetchWarehouses } from "@/api/warehouses.api";
 import type { MovementFormValues } from "@/schemas/movement.schema";
-import type { MovementFilters } from "@/types";
+import type { MovementOptions } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export const useMovements = (filters: MovementFilters = {}) => {
+export const useMovements = (options: MovementOptions = {}) => {
     const queryClient = useQueryClient();
 
     const movementsQuery = useQuery({
-        queryKey: ['movements', filters.page, filters.type, filters.sourceWarehouseId, filters.destinationWarehouseId, filters.search, filters.startDate, filters.endDate],
-        queryFn: () => fetchMovements(filters),
+        queryKey: ['movements', options.page, options.type, options.sourceWarehouseId, options.destinationWarehouseId, options.search, options.startDate, options.endDate, options.sortBy, options.sortOrder],
+        queryFn: () => fetchMovements(options),
     });
     const productsQuery = useQuery({
         queryKey: ['products'],
-        queryFn: () => fetchProducts(true)
+        queryFn: () => fetchProducts({ all: true })
     });
     const warehousesQuery = useQuery({
         queryKey: ['warehouses'],
-        queryFn: () => fetchWarehouses(true)
+        queryFn: () => fetchWarehouses({ all: true })
     });
 
     const createMutation = useMutation({
@@ -53,7 +53,7 @@ export const useMovements = (filters: MovementFilters = {}) => {
     return {
         movements: movementsQuery.data?.data || [],
         isLoading: movementsQuery.isLoading,
-        error: movementsQuery.error,
+        isErrored: movementsQuery.isError,
         meta: movementsQuery.data?.meta,
 
         products: productsQuery.data?.data || [],

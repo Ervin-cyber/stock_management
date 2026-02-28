@@ -82,7 +82,16 @@ export interface DataTablePaginationProps {
     onPageChange: (page: number) => void;
 }
 
-export interface MovementFilters {
+export interface FetchOptions {
+    page?: number;
+    limit?: number;
+    all?: boolean;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
+export interface MovementOptions {
     page?: number;
     limit?: number;
     type?: string;
@@ -91,4 +100,25 @@ export interface MovementFilters {
     search?: string;
     startDate?: string;
     endDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
+export interface EditDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    editingItem: any | null;
+}
+
+export interface DataTableProps<T> {
+    items: T[];
+    isLoading: boolean;
+    isErrored: boolean;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+    onSort: (column: string) => void;
+    onEdit?: (product: any) => void;
+    onDelete?: (id: string) => void;
+    onView?: (id: string) => void;
+    hasPermission: boolean;
 }

@@ -1,9 +1,16 @@
-import type { PaginatedResponse, Product } from "@/types";
+import type { FetchOptions, PaginatedResponse, Product } from "@/types";
 import { api } from "./axios";
 import type { ProductFormValues } from "@/schemas/product.schema";
 
-export const fetchProducts = async (all = false, page = 1, limit = 10, search = ''): Promise<PaginatedResponse<Product[]>> => {
-    const response = await api.get(`/products?page=${page}&limit=${limit}&all=${all}&search=${encodeURIComponent(search)}`);
+export const fetchProducts = async (options: FetchOptions = {}): Promise<PaginatedResponse<Product[]>> => {
+    const params = new URLSearchParams();
+    if (options.page) params.append('page', options.page.toString());
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.all) params.append('all', options.all.toString());
+    if (options.search) params.append('search', options.search);
+    if (options.sortBy) params.append('sortBy', options.sortBy);
+    if (options.sortOrder) params.append('sortOrder', options.sortOrder);
+    const response = await api.get(`/products?${params.toString()}`);
     return response.data;
 };
 

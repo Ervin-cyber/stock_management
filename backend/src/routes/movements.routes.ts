@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
-import { CreateMovementBody, MovementsQueryParams, PaginationParams } from "../types";
+import { CreateMovementBody, MovementsQueryParams } from "../types";
 
 export default async function movementRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
@@ -10,9 +10,46 @@ export default async function movementRoutes(app: FastifyInstance) {
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
 
-        const { type, sourceWarehouseId, destinationWarehouseId, search, startDate, endDate } = request.query;
+        const { type, sourceWarehouseId, destinationWarehouseId, search, startDate, endDate, sortBy } = request.query;
 
         const skip = (page - 1) * limit;
+
+        let orderByClause: any = { createdAt: 'desc' };
+
+        let sortOrder = 'desc';
+
+        if (request.query.sortOrder && request.query.sortOrder.toLowerCase() === 'asc') {
+            sortOrder = 'asc';
+        }
+
+        switch (sortBy) {
+            case 'date':
+                orderByClause = { createdAt: sortOrder };
+                break;
+            case 'type':
+            case 'movementType':
+                orderByClause = { movementType: sortOrder };
+                break;
+            case 'qty':
+            case 'quantity':
+                orderByClause = { stockQuantity: sortOrder };
+                break;
+            case 'reference':
+                orderByClause = { reference: sortOrder };
+                break;
+            case 'product':
+                orderByClause = { product: { name: sortOrder } };
+                break;
+            case 'source':
+                orderByClause = { sourceWarehouse: { name: sortOrder } };
+                break;
+            case 'destination':
+                orderByClause = { destinationWarehouse: { name: sortOrder } };
+                break;
+            case 'user':
+                orderByClause = { createdBy: { name: sortOrder } };
+                break;
+        }
 
         const whereClause: any = {};
 
@@ -21,15 +58,11 @@ export default async function movementRoutes(app: FastifyInstance) {
         }
 
         if (sourceWarehouseId && sourceWarehouseId !== 'ALL') {
-            whereClause.OR = [
-                { sourceWarehouseId: sourceWarehouseId },
-            ];
+            whereClause.sourceWarehouseId = sourceWarehouseId;
         }
 
         if (destinationWarehouseId && destinationWarehouseId !== 'ALL') {
-            whereClause.OR = [
-                { destinationWarehouseId: destinationWarehouseId }
-            ];
+            whereClause.destinationWarehouseId = destinationWarehouseId;
         }
 
         if (sourceWarehouseId && destinationWarehouseId && sourceWarehouseId !== 'ALL' && destinationWarehouseId === sourceWarehouseId) throw new AppError('Destination must be different from source.');
@@ -56,7 +89,7 @@ export default async function movementRoutes(app: FastifyInstance) {
         const [totalCount, movements] = await prisma.$transaction([
             prisma.stockMovement.count({ where: whereClause }),
             prisma.stockMovement.findMany({
-                orderBy: { createdAt: 'desc' },
+                orderBy: orderByClause,
                 where: whereClause,
                 skip: skip,
                 take: limit,

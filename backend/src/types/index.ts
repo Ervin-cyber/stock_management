@@ -30,23 +30,27 @@ export interface IdentifierParam {
     id: string;
 }
 
-export interface PaginationParams {
+export interface FetchQueryParams {
     Querystring: {
         page?: string;
         limit?: string;
         all?: string;
-        search?: string
+        search?: string;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
     }
 }
 export interface MovementsQueryParams {
     Querystring: {
         page?: string;
         limit?: string;
-        type?: string; 
-        sourceWarehouseId?: string; 
+        type?: string;
+        sourceWarehouseId?: string;
         destinationWarehouseId?: string;
-        search?: string; 
-        startDate?: string; 
+        search?: string;
+        startDate?: string;
         endDate?: string;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
     }
 }

@@ -1,17 +1,41 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import prisma from '../lib/prisma';
-import { IdentifierParam, PaginationParams, UpsertProductBody } from '../types';
+import { FetchQueryParams, IdentifierParam, UpsertProductBody } from '../types';
 
 export default async function productRoutes(app: FastifyInstance) {
     app.addHook('onRequest', app.authenticate);
 
-    app.get('/', async (request: FastifyRequest<PaginationParams>, reply: FastifyReply) => {
+    app.get('/', async (request: FastifyRequest<FetchQueryParams>, reply: FastifyReply) => {
         const isAll = request.query.all === 'true';
 
         const search = request.query.search;
 
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
+
+        let orderByClause: any = { createdAt: 'desc' };
+
+        const sortBy = request.query.sortBy;
+        let sortOrder = 'desc';
+
+        if (request.query.sortOrder && request.query.sortOrder.toLowerCase() === 'asc') {
+            sortOrder = 'asc';
+        }
+
+        switch (sortBy) {
+            case 'sku':
+                orderByClause = { sku: sortOrder };
+                break;
+            case 'name':
+                orderByClause = { name: sortOrder };
+                break;
+            case 'description':
+                orderByClause = { description: sortOrder };
+                break;
+            case 'createdAt':
+                orderByClause = { createdAt: sortOrder };
+                break;
+        }
 
         const skip = (page - 1) * limit;
 
@@ -29,7 +53,7 @@ export default async function productRoutes(app: FastifyInstance) {
             prisma.product.count({ where: whereClause }),
             prisma.product.findMany({
                 where: whereClause,
-                orderBy: { name: 'asc' },
+                orderBy: orderByClause,
                 skip: isAll ? undefined : skip,
                 take: isAll ? undefined : limit,
             })

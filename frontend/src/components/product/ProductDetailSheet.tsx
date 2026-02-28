@@ -3,9 +3,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useProductDetails } from '../hooks/useProducts';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import type { ProductDetailSheetProps } from '@/types';
+import { useProductDetails } from '@/hooks/useProducts';
 
 export default function ProductDetailSheet({ productId, isOpen, onClose }: ProductDetailSheetProps) {
     const { data: product, isLoading } = useProductDetails(productId);

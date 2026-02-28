@@ -47,7 +47,7 @@ app.get('/health', async (request, reply) => {
 
 const start = async () => {
     try {
-        const port = parseInt(process.env.APP_PORT ?? '3001');
+        const port = parseInt(process.env.APP_PORT ?? '3000');
 
         await app.listen({ port, host: '0.0.0.0' }); //'0.0.0.0' docker
         console.log(`🚀 Server running at http://localhost:${port} address`);

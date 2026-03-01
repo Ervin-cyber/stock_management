@@ -59,9 +59,9 @@ app.register(fastifyRateLimit, {
         throw new AppError(`Too many requests! Please try again after ${context.after}.`, 429);
     }
 });
-
+console.log("CORS ENABLED FOR THIS URL:", FRONTEND_URL);
 app.register(cors, {
-    origin: FRONTEND_URL,
+    origin: [FRONTEND_URL, 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });

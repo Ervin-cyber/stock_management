@@ -15,7 +15,7 @@ describe('Product CRUD API', () => {
     beforeAll(async () => {
         const adminLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: { email: 'admin@mail.com', password: 'adminpassword123' }
         });
         adminToken = adminLogin.json().token;
@@ -34,7 +34,7 @@ describe('Product CRUD API', () => {
 
         const userLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: { email: viewerUserEmail, password: 'userpassword123' }
         });
         userToken = userLogin.json().token;
@@ -50,37 +50,37 @@ describe('Product CRUD API', () => {
         await prisma.$disconnect();
     });
 
-    it('GET /api/products - Should reject without token (401)', async () => {
+    it('GET /api/v1/products - Should reject without token (401)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/products'
+            url: '/api/v1/products'
         });
         expect(response.statusCode).toBe(401);
     });
 
-    it('GET /api/products - Should allow Standard User to view (200)', async () => {
+    it('GET /api/v1/products - Should allow Standard User to view (200)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/products',
+            url: '/api/v1/products',
             headers: { authorization: `Bearer ${userToken}` }
         });
         expect(response.statusCode).toBe(200);
     });
 
-    it('POST /api/products - Should reject creation for Standard User (403)', async () => {
+    it('POST /api/v1/products - Should reject creation for Standard User (403)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/products',
+            url: '/api/v1/products',
             headers: { authorization: `Bearer ${userToken}` },
             payload: { sku: 'KEYBOARD-01', name: 'Logitech' }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('POST /api/products - Should create product with Admin token (201)', async () => {
+    it('POST /api/v1/products - Should create product with Admin token (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/products',
+            url: '/api/v1/products',
             headers: { authorization: `Bearer ${adminToken}` },
             payload: { sku: uniqueSku, name: 'Logitech mouse' }
         });
@@ -93,20 +93,20 @@ describe('Product CRUD API', () => {
         testProductId = json.data.id;
     });
 
-    it('POST /api/products - Should reject duplicate SKU (409)', async () => {
+    it('POST /api/v1/products - Should reject duplicate SKU (409)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/products',
+            url: '/api/v1/products',
             headers: { authorization: `Bearer ${adminToken}` },
             payload: { sku: uniqueSku, name: 'Lenovo gamepad' }
         });
         expect(response.statusCode).toBe(409);
     });
 
-    it('PUT /api/products/:id - Should successfully update name (200)', async () => {
+    it('PUT /api/v1/products/:id - Should successfully update name (200)', async () => {
         const response = await app.inject({
             method: 'PUT',
-            url: `/api/products/${testProductId}`,
+            url: `/api/v1/products/${testProductId}`,
             headers: { authorization: `Bearer ${adminToken}` },
             payload: { sku: uniqueSku, name: 'Asus Rog Gaming Laptop',  }
         });
@@ -115,10 +115,10 @@ describe('Product CRUD API', () => {
         expect(response.json().data.name).toBe('Asus Rog Gaming Laptop');
     });
 
-    it('DELETE /api/products/:id - Should successfully perform SOFT DELETE (200)', async () => {
+    it('DELETE /api/v1/products/:id - Should successfully perform SOFT DELETE (200)', async () => {
         const response = await app.inject({
             method: 'DELETE',
-            url: `/api/products/${testProductId}`,
+            url: `/api/v1/products/${testProductId}`,
             headers: { authorization: `Bearer ${adminToken}` }
         });
         
@@ -131,7 +131,7 @@ describe('Product CRUD API', () => {
 
         const getResponse = await app.inject({
             method: 'GET',
-            url: '/api/products',
+            url: '/api/v1/products',
             headers: { authorization: `Bearer ${adminToken}` }
         });
         const productsList = getResponse.json().data;

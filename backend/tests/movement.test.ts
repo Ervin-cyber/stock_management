@@ -30,7 +30,7 @@ describe('Stock & Movements API', () => {
 
         const managerLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: { email: managerUser.email, password: 'testpassword123' }
         });
         managerToken = managerLogin.json().token;
@@ -49,7 +49,7 @@ describe('Stock & Movements API', () => {
 
         const userLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: { email: viewerUser.email, password: 'userpassword123' }
         });
         userToken = userLogin.json().token;
@@ -73,29 +73,29 @@ describe('Stock & Movements API', () => {
         await prisma.$disconnect();
     });
 
-    it('GET /api/movements - Should allow Viewer User to view stock (200)', async () => {
+    it('GET /api/v1/movements - Should allow Viewer User to view stock (200)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/movements',
+            url: '/api/v1/movements',
             headers: { authorization: `Bearer ${userToken}` }
         });
         expect(response.statusCode).toBe(200);
     });
 
-    it('POST /api/movements - Should reject Viewer User (403)', async () => {
+    it('POST /api/v1/movements - Should reject Viewer User (403)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/movements',
+            url: '/api/v1/movements',
             headers: { authorization: `Bearer ${userToken}` },
             payload: { productId: testProductId, movementType: 'IN', stockQuantity: 10, destinationWarehouseId: destWarehouseId }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('POST /api/movements - IN: Should successfully receive goods (201)', async () => {
+    it('POST /api/v1/movements - IN: Should successfully receive goods (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/movements',
+            url: '/api/v1/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,
@@ -113,10 +113,10 @@ describe('Stock & Movements API', () => {
         expect(stock?.stockQuantity).toBe(100);
     });
 
-    it('POST /api/movements - OUT: Should fail if source has insufficient stock (400)', async () => {
+    it('POST /api/v1/movements - OUT: Should fail if source has insufficient stock (400)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/movements',
+            url: '/api/v1/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,
@@ -130,10 +130,10 @@ describe('Stock & Movements API', () => {
         expect(response.json().error?.message).toContain('Insufficient stock');
     });
 
-    it('POST /api/movements - TRANSFER: Should successfully transfer goods (201)', async () => {
+    it('POST /api/v1/movements - TRANSFER: Should successfully transfer goods (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/movements',
+            url: '/api/v1/movements',
             headers: { authorization: `Bearer ${managerToken}` },
             payload: {
                 productId: testProductId,

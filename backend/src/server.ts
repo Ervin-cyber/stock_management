@@ -69,12 +69,12 @@ app.register(cors, {
 app.register(authPlugin);
 app.register(errorHandler)
 
-app.register(authRoutes, { prefix: '/api/auth' });
-app.register(userRoutes, { prefix: '/api/users' });
-app.register(productRoutes, { prefix: '/api/products' });
-app.register(warehouseRoutes, { prefix: '/api/warehouses' });
-app.register(movementRoutes, { prefix: '/api/movements' });
-app.register(dashboardRoutes, { prefix: '/api/dashboard' });
+app.register(authRoutes, { prefix: '/api/v1/auth' });
+app.register(userRoutes, { prefix: '/api/v1/users' });
+app.register(productRoutes, { prefix: '/api/v1/products' });
+app.register(warehouseRoutes, { prefix: '/api/v1/warehouses' });
+app.register(movementRoutes, { prefix: '/api/v1/movements' });
+app.register(dashboardRoutes, { prefix: '/api/v1/dashboard' });
 
 
 app.get('/health', async (request, reply) => {

@@ -15,7 +15,7 @@ describe('Warehouse CRUD API', () => {
     beforeAll(async () => {
         const adminLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: {
                 email: 'admin@mail.com',
                 password: 'adminpassword123'
@@ -37,7 +37,7 @@ describe('Warehouse CRUD API', () => {
 
         const userLogin = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: {
                 email: viewerUserEmail,
                 password: 'viewerpassword123'
@@ -62,38 +62,38 @@ describe('Warehouse CRUD API', () => {
         await prisma.$disconnect();
     });
 
-    it('GET /api/warehouses - Should reject request without token (401)', async () => {
+    it('GET /api/v1/warehouses - Should reject request without token (401)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/warehouses'
+            url: '/api/v1/warehouses'
         });
         expect(response.statusCode).toBe(401);
     });
 
-    it('GET /api/warehouses - Should allow Viewer User to view warehouses (200)', async () => {
+    it('GET /api/v1/warehouses - Should allow Viewer User to view warehouses (200)', async () => {
         const response = await app.inject({
             method: 'GET',
-            url: '/api/warehouses',
+            url: '/api/v1/warehouses',
             headers: { authorization: `Bearer ${viewerToken}` }
         });
         expect(response.statusCode).toBe(200);
         expect(response.json().success).toBe(true);
     });
 
-    it('POST /api/warehouses - Should reject creation for Viewer User (403)', async () => {
+    it('POST /api/v1/warehouses - Should reject creation for Viewer User (403)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/warehouses',
+            url: '/api/v1/warehouses',
             headers: { authorization: `Bearer ${viewerToken}` },
             payload: { name: 'Warehouse 1', location: 'Targu-Mures' }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('POST /api/warehouses - Should create a warehouse with Admin token (201)', async () => {
+    it('POST /api/v1/warehouses - Should create a warehouse with Admin token (201)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/warehouses',
+            url: '/api/v1/warehouses',
             headers: { authorization: `Bearer ${adminToken}` },
             payload: {
                 name: uniqueWarehouseName,
@@ -109,10 +109,10 @@ describe('Warehouse CRUD API', () => {
         testWarehouseId = json.data.id;
     });
 
-    it('POST /api/warehouses - Should reject duplicate warehouse name (409)', async () => {
+    it('POST /api/v1/warehouses - Should reject duplicate warehouse name (409)', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/warehouses',
+            url: '/api/v1/warehouses',
             headers: { authorization: `Bearer ${adminToken}` },
             payload: {
                 name: uniqueWarehouseName,
@@ -123,20 +123,20 @@ describe('Warehouse CRUD API', () => {
         expect(response.statusCode).toBe(409);
     });
 
-    it('PUT /api/warehouses/:id - Should reject update for Viewer User (403)', async () => {
+    it('PUT /api/v1/warehouses/:id - Should reject update for Viewer User (403)', async () => {
         const response = await app.inject({
             method: 'PUT',
-            url: `/api/warehouses/${testWarehouseId}`,
+            url: `/api/v1/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${viewerToken}` },
             payload: { name: uniqueWarehouseName, location: 'Bucharest' }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('PUT /api/warehouses/:id - Should successfully update with Admin token (200)', async () => {
+    it('PUT /api/v1/warehouses/:id - Should successfully update with Admin token (200)', async () => {
         const response = await app.inject({
             method: 'PUT',
-            url: `/api/warehouses/${testWarehouseId}`,
+            url: `/api/v1/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${adminToken}` },
             payload: { name: uniqueWarehouseName, location: 'Targu-Mures' }
         });
@@ -145,19 +145,19 @@ describe('Warehouse CRUD API', () => {
         expect(response.json().data.location).toBe('Targu-Mures');
     });
 
-    it('DELETE /api/warehouses/:id - Should reject deletion for Viewer User (403)', async () => {
+    it('DELETE /api/v1/warehouses/:id - Should reject deletion for Viewer User (403)', async () => {
         const response = await app.inject({
             method: 'DELETE',
-            url: `/api/warehouses/${testWarehouseId}`,
+            url: `/api/v1/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${viewerToken}` }
         });
         expect(response.statusCode).toBe(403);
     });
 
-    it('DELETE /api/warehouses/:id - Should successfully delete with Admin token (200)', async () => {
+    it('DELETE /api/v1/warehouses/:id - Should successfully delete with Admin token (200)', async () => {
         const response = await app.inject({
             method: 'DELETE',
-            url: `/api/warehouses/${testWarehouseId}`,
+            url: `/api/v1/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${adminToken}` }
         });
 

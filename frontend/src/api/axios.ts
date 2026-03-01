@@ -22,13 +22,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        const status = error.response.status;
-        const serverMessage = error.response.data?.error?.message;// || error.response.data?.message;
-
-        const token = useAuthStore.getState()?.token;
-        const originalRequestUrl = error.config?.url;
         if (error.response) {
+            const status = error.response.status;
+            const serverMessage = error.response.data?.error?.message;
 
+            const token = useAuthStore.getState()?.token;
+            const originalRequestUrl = error.config?.url;
 
             if (status === 401 && token && !originalRequestUrl?.includes('/login')) {
                 useAuthStore.getState().logout();

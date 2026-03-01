@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Building2, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw, Activity, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Package, Building2, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw, Activity, TrendingUp } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import { useDashboard } from '@/hooks/useDashboard';;
@@ -25,7 +25,10 @@ export default function Dashboard() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    <LayoutDashboard className="h-8 w-8 text-blue-600" />
+                    Dashboard
+                </h1>
                 <p className="text-slate-500">Overview of the current status of the inventory.</p>
             </div>
 
@@ -117,7 +120,7 @@ export default function Dashboard() {
                                                 {mov.movementType === 'IN' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 flex items-center"><ArrowDownRight className="w-3 h-3 mr-0.5" />IN</span>}
                                                 {mov.movementType === 'OUT' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 flex items-center"><ArrowUpRight className="w-3 h-3 mr-0.5" />OUT</span>}
                                                 {mov.movementType === 'TRANSFER' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 flex items-center"><RefreshCw className="w-3 h-3 mr-0.5" />TRANS</span>}
-                                                <span className="text-xs font-medium text-slate-700">{mov.stockQuantity} db</span>
+                                                <span className="text-xs font-medium text-slate-700">{mov.stockQuantity} pcs</span>
                                             </div>
                                         </div>
                                     </div>

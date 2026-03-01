@@ -12,6 +12,7 @@ import ActionTooltip from '@/components/ActionTooltip';
 import MovementDialog from '@/components/movement/MovementDialog';
 import MovementTable from '@/components/movement/MovementTable';
 import type { Warehouse } from '@/types';
+import { useMovementTypes } from '@/hooks/useMovementTypes';
 
 export default function Movements() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -30,7 +31,7 @@ export default function Movements() {
     const debouncedProductSearch = useDebounce(productSearch, 500);
 
     const userRole = useAuthStore((state) => state.user?.role);
-    const isAdmin = userRole === 'ADMIN';
+    const hasCreatePermission = userRole === 'ADMIN' || userRole === 'MANAGER';
 
     const { movements, meta, warehouses, isLoading, isErrored } = useMovements({
         page,
@@ -43,6 +44,8 @@ export default function Movements() {
         sortBy,
         sortOrder
     });
+
+    const { data: movementTypes = [] } = useMovementTypes();
 
     useEffect(() => {
         setPage(1);
@@ -99,11 +102,11 @@ export default function Movements() {
                     <p className="text-slate-500">Record IN, OUT, and TRANSFER inventory transactions.</p>
                 </div>
 
-                <ActionTooltip label={!isAdmin ? "You do not have permission to create" : ""} showTooltip={!isAdmin}>
-                    <span className={!isAdmin ? "cursor-not-allowed" : ""}>
+                <ActionTooltip label={!hasCreatePermission ? "You do not have permission to create" : ""} showTooltip={!hasCreatePermission}>
+                    <span className={!hasCreatePermission ? "cursor-not-allowed" : ""}>
                         <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
                             onClick={() => setIsDialogOpen(true)}
-                            disabled={!isAdmin}
+                            disabled={!hasCreatePermission}
                         >
                             <Plus className="mr-2 h-4 w-4" /> New Movement
                         </Button>
@@ -163,9 +166,11 @@ export default function Movements() {
                                     <SelectTrigger><SelectValue placeholder="ALL Type" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">ALL</SelectItem>
-                                        <SelectItem value="IN">IN</SelectItem>
-                                        <SelectItem value="OUT">OUT</SelectItem>
-                                        <SelectItem value="TRANSFER">TRANSFER</SelectItem>
+                                        {
+                                            movementTypes?.map((movementType) =>
+                                                <SelectItem value={movementType}>{movementType}</SelectItem>
+                                            )
+                                        }
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -216,7 +221,7 @@ export default function Movements() {
                     sortBy={sortBy}
                     sortOrder={sortOrder}
                     onSort={handleSort}
-                    hasPermission={isAdmin}
+                    hasPermission={hasCreatePermission}
                 />
                 <DataTablePagination
                     currentPage={page}

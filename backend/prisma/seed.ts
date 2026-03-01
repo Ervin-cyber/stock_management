@@ -17,6 +17,7 @@ async function main() {
             name: 'Admin',
             password: hashedPassword,
             role: 'ADMIN',
+            active: true
         },
     });
 
@@ -30,6 +31,7 @@ async function main() {
             name: 'Istvan Manager',
             password: hashedPassword,
             role: 'MANAGER',
+            active: true
         },
     });
 
@@ -43,6 +45,7 @@ async function main() {
             name: 'Attila Viewer',
             password: hashedPassword,
             role: 'VIEWER',
+            active: true
         },
     });
 
@@ -58,19 +61,19 @@ async function main() {
         }
     });
 
-    console.log(`✅ Warehouse 1 created: ${mainWarehouse.name}`);
+    console.log(`✅ Main Warehouse created: ${mainWarehouse.name}`);
 
     const secondaryWarehouse = await prisma.warehouse.upsert({
-        where: { name: 'Warehouse 2' },
+        where: { name: 'Secondary Warehouse' },
         update: {},
         create: {
-            name: 'Warehouse 2',
+            name: 'Secondary Warehouse',
             location: 'Targu-Mures',
             createdById: admin.id,
         }
     });
 
-    console.log(`✅ Warehouse 2 created: ${secondaryWarehouse.name}`);
+    console.log(`✅ Secondary Warehouse created: ${secondaryWarehouse.name}`);
 
     console.log('Seeding Apple Dev Office products...');
 
@@ -111,6 +114,53 @@ async function main() {
     }
 
     console.log('✅ 20 Apple Dev Office products seeded successfully!');
+
+    const warehouses = [mainWarehouse, secondaryWarehouse];
+
+    const allProducts = await prisma.product.findMany();
+
+    for (const product of allProducts) {
+        for (const warehouse of warehouses) {
+
+            const isLowStock = Math.random() < 0.2;
+            const randomQuantity = isLowStock
+                ? Math.floor(Math.random() * 8) + 1
+                : Math.floor(Math.random() * 40) + 10;
+
+            await prisma.$transaction(async (tx) => {
+
+                await tx.stockMovement.create({
+                    data: {
+                        movementType: 'IN',
+                        stockQuantity: randomQuantity,
+                        productId: product.id,
+                        destinationWarehouseId: warehouse.id,
+                        createdById: admin.id,
+                        description: 'seed'
+                    }
+                });
+
+                await tx.stock.upsert({
+                    where: {
+                        warehouseId_productId: {
+                            warehouseId: warehouse.id,
+                            productId: product.id
+                        }
+                    },
+                    update: {
+                        stockQuantity: randomQuantity
+                    },
+                    create: {
+                        warehouseId: warehouse.id,
+                        productId: product.id,
+                        stockQuantity: randomQuantity
+                    }
+                });
+            });
+        }
+    }
+
+    console.log('✅ Products stock seeded successfully!');
 }
 
 main()

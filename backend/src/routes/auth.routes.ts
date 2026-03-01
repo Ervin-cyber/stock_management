@@ -1,14 +1,23 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
-import { LoginBody } from "../types";
 import { AppError } from "../utils/AppError";
 import { sendVerificationEmail } from "../utils/mailer";
 import crypto from 'crypto';
+import { LoginBodySchema, RegisterBodySchema, VerifyEmailBodySchema } from "../types";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
 
 export default async function authRoutes(app: FastifyInstance) {
-    app.post('/login', async (
-        request: FastifyRequest<{ Body: LoginBody }>
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
+
+    typedApp.post('/login', {
+        schema: {
+            description: 'Login',
+            tags: ['Auth'],
+            body: LoginBodySchema
+        },
+    }, async (
+        request
         , reply) => {
         const { email, password } = request.body ?? {};
 
@@ -36,7 +45,7 @@ export default async function authRoutes(app: FastifyInstance) {
             throw new AppError('Wrong email or password!', 401);
         }
 
-        const token = app.jwt.sign({
+        const token = typedApp.jwt.sign({
             id: user.id,
             email: user.email,
             role: user.role,
@@ -53,8 +62,13 @@ export default async function authRoutes(app: FastifyInstance) {
         });
     });
 
-    app.get('/me', {
-        onRequest: [app.authenticate]
+    typedApp.get('/me', {
+        schema: {
+            description: 'Me',
+            tags: ['Auth'],
+            security: [{ bearerAuth: [] }],
+        },
+        onRequest: [typedApp.authenticate]
     }, async (request, reply) => {
         const user = await prisma.user.findUnique({
             where: { id: request.user.id },
@@ -74,10 +88,13 @@ export default async function authRoutes(app: FastifyInstance) {
         return reply.send({ success: true, user });
     });
 
-    app.post('/register', async (
-        request: FastifyRequest<{ Body: { email: string; password: string; name: string } }>,
-        reply: FastifyReply
-    ) => {
+    typedApp.post('/register', {
+        schema: {
+            description: 'Register',
+            tags: ['Auth'],
+            body: RegisterBodySchema
+        },
+    }, async (request, reply) => {
         const { email, password, name } = request.body ?? {};
 
         if (!email || !password || !name) {
@@ -110,10 +127,13 @@ export default async function authRoutes(app: FastifyInstance) {
         });
     });
 
-    app.post('/verify-email', async (
-        request: FastifyRequest<{ Body: { token: string } }>,
-        reply: FastifyReply
-    ) => {
+    typedApp.post('/verify-email', {
+        schema: {
+            description: 'Verify Email',
+            tags: ['Auth'],
+            body: VerifyEmailBodySchema
+        },
+    }, async (request, reply) => {
         const { token } = request.body;
 
         if (!token) {

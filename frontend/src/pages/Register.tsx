@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { registerUser } from '@/api/auth.api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -7,7 +7,6 @@ import { Loader2, MailCheck } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 export default function Register() {
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 

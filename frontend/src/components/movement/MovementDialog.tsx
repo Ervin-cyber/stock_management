@@ -8,9 +8,13 @@ import type { EditDialogProps } from '@/types';
 import { useMovementMutations } from '@/hooks/useMovements';
 import { movementSchema, type MovementFormValues } from '@/schemas/movement.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMovementTypes } from '@/hooks/useMovementTypes';
+import { MOVEMENT_UI_CONFIG } from '@/lib/movement-ui';
 
 export default function MovementDialog({ isOpen, onClose }: EditDialogProps) {
     const { createMovement, isCreating, products, warehouses } = useMovementMutations();
+
+    const { data: movementTypes = [] } = useMovementTypes();
 
     const form = useForm<MovementFormValues>({
         resolver: zodResolver(movementSchema) as any,
@@ -81,9 +85,19 @@ export default function MovementDialog({ isOpen, onClose }: EditDialogProps) {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="IN" className="text-emerald-600 font-medium">IN (Receive)</SelectItem>
-                                                <SelectItem value="OUT" className="text-rose-600 font-medium">OUT (Dispatch)</SelectItem>
-                                                <SelectItem value="TRANSFER" className="text-blue-600 font-medium">TRANSFER</SelectItem>
+                                                {movementTypes.map((type) => {
+                                                    const config = MOVEMENT_UI_CONFIG[type] || MOVEMENT_UI_CONFIG.DEFAULT;
+
+                                                    return (
+                                                        <SelectItem
+                                                            key={type}
+                                                            value={type}
+                                                            className={`${config.selectText} font-medium`}
+                                                        >
+                                                            {config.fullLabel}
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

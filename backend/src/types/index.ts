@@ -1,58 +1,74 @@
-import { MovementType } from "@prisma/client";
+import { z } from 'zod';
+import { MovementType, Role } from '@prisma/client';
 
-export interface LoginBody {
-    email?: string;
-    password?: string;
-}
+const ZodMovementType = z.nativeEnum(MovementType);
+const ZodRole = z.nativeEnum(Role);
 
-export interface UpsertProductBody {
-    sku: string;
-    name: string;
-    description?: string;
-    active?: boolean;
-}
+export const LoginBodySchema = z.object({
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(6, "Password must be at least 6 characters long"),
+});
 
-export interface UpsertWarehouseBody {
-    name: string;
-    location: string;
-    active?: boolean;
-}
+export const RegisterBodySchema = z.object({
+    name: z.string().min(2, "The name must be at least 2 characters long"),
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(6, "Password must be at least 6 characters long"),
+});
 
-export interface CreateMovementBody {
-    productId: string;
-    movementType: MovementType;
-    stockQuantity: number;
-    sourceWarehouseId?: string;
-    destinationWarehouseId?: string;
-    description?: string;
-    reference?: string;
-}
+export const VerifyEmailBodySchema = z.object({
+    token: z.string().min(1, "The confirmation token is missing!"),
+});
 
-export interface IdentifierParam {
-    id: string;
-}
+export const AdminUpdateUserBodySchema = z.object({
+    role: ZodRole.optional(),
+    active: z.boolean().optional(),
+});
 
-export interface FetchQueryParams {
-    Querystring: {
-        page?: string;
-        limit?: string;
-        all?: string;
-        search?: string;
-        sortBy?: string;
-        sortOrder?: 'asc' | 'desc';
-    }
-}
-export interface MovementsQueryParams {
-    Querystring: {
-        page?: string;
-        limit?: string;
-        type?: string;
-        sourceWarehouseId?: string;
-        destinationWarehouseId?: string;
-        search?: string;
-        startDate?: string;
-        endDate?: string;
-        sortBy?: string;
-        sortOrder?: 'asc' | 'desc';
-    }
-}
+export const UpsertProductBodySchema = z.object({
+    sku: z.string().min(3, "SKU must be at least 3 characters long"),
+    name: z.string().min(2, "The name must be at least 2 characters long"),
+    description: z.string().optional(),
+    active: z.boolean().optional(),
+});
+
+export const UpsertWarehouseBodySchema = z.object({
+    name: z.string().min(3, "The name must be at least 3 characters long"),
+    location: z.string().min(3, "The location must be at least 3 characters long"),
+    active: z.boolean().optional(),
+});
+
+export const CreateMovementBodySchema = z.object({
+    productId: z.string().uuid("Invalid product ID"),
+    movementType: ZodMovementType,
+    stockQuantity: z.number().int().positive("Quantity must be greater than 0"),
+    sourceWarehouseId: z.string().uuid().optional(),
+    destinationWarehouseId: z.string().uuid().optional(),
+    description: z.string().optional(),
+    reference: z.string().optional(),
+});
+
+export const IdentifierParamSchema = z.object({
+    id: z.string().uuid("Invalid UUID format"),
+});
+
+export const FetchQueryParamsSchema = z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    all: z.string().optional(),
+    search: z.string().optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+export const MovementsQueryParamsSchema = z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    type: z.union([ZodMovementType, z.literal('ALL')]).optional(),
+    sourceWarehouseId: z.string().uuid().optional(),
+    destinationWarehouseId: z.string().uuid().optional(),
+    search: z.string().optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
+});

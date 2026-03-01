@@ -1,12 +1,22 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import prisma from '../lib/prisma';
-import { FetchQueryParams, IdentifierParam, UpsertProductBody } from '../types';
 import { AppError } from '../utils/AppError';
+import { ZodTypeProvider } from 'fastify-type-provider-zod';
+import { FetchQueryParamsSchema, IdentifierParamSchema, UpsertProductBodySchema } from '../types';
 
 export default async function productRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate);
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-    app.get('/', async (request: FastifyRequest<FetchQueryParams>, reply: FastifyReply) => {
+    typedApp.addHook('onRequest', app.authenticate);
+
+    typedApp.get('/', {
+        schema: {
+            description: '',
+            tags: ['Products'],
+            security: [{ bearerAuth: [] }],
+            querystring: FetchQueryParamsSchema
+        },
+    }, async (request, reply) => {
         const isAll = request.query.all === 'true';
 
         const search = request.query.search;
@@ -67,7 +77,14 @@ export default async function productRoutes(app: FastifyInstance) {
         });
     });
 
-    app.get('/:id', async (request: FastifyRequest<{ Params: IdentifierParam }>, reply: FastifyReply) => {
+    typedApp.get('/:id', {
+        schema: {
+            description: 'Get Product',
+            tags: ['Products'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema
+        },
+    }, async (request, reply) => {
         const { id } = request.params ?? {};
 
         const product = await prisma.product.findUnique({
@@ -98,10 +115,14 @@ export default async function productRoutes(app: FastifyInstance) {
     });
 
 
-    app.post('/', async (
-        request: FastifyRequest<{ Body: UpsertProductBody }>,
-        reply: FastifyReply
-    ) => {
+    typedApp.post('/', {
+        schema: {
+            description: 'Insert',
+            tags: ['Products'],
+            security: [{ bearerAuth: [] }],
+            body: UpsertProductBodySchema,
+        },
+    }, async (request, reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required.', 403);
         }
@@ -125,10 +146,15 @@ export default async function productRoutes(app: FastifyInstance) {
         return reply.status(201).send({ success: true, data: newProduct });
     });
 
-    app.put('/:id', async (
-        request: FastifyRequest<{ Params: IdentifierParam; Body: UpsertProductBody }>,
-        reply: FastifyReply
-    ) => {
+    typedApp.put('/:id', {
+        schema: {
+            description: 'Update',
+            tags: ['Products'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema,
+            body: UpsertProductBodySchema,
+        },
+    }, async (request, reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required.', 403);
         }
@@ -162,10 +188,14 @@ export default async function productRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: updatedProduct });
     });
 
-    app.delete('/:id', async (
-        request: FastifyRequest<{ Params: IdentifierParam }>,
-        reply: FastifyReply
-    ) => {
+    typedApp.delete('/:id', {
+        schema: {
+            description: 'Delete',
+            tags: ['Products'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema
+        },
+    }, async (request, reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required.', 403);
         }

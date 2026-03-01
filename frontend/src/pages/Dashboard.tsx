@@ -4,6 +4,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import { useDashboard } from '@/hooks/useDashboard';;
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Dashboard() {
     const { stats, isLoading, isErrored } = useDashboard();
@@ -77,7 +78,7 @@ export default function Dashboard() {
                         <CardTitle className="text-lg text-slate-800">Traffic (Past 7 days)</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] w-full">
+                        <div className="h-[220px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -101,7 +102,7 @@ export default function Dashboard() {
                         <CardTitle className="text-lg text-slate-800">Recent transactions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-2">
                             {stats.recentMovements.length === 0 ? (
                                 <div className="text-sm text-slate-500 text-center py-8">No data yet.</div>
                             ) : (
@@ -125,6 +126,58 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
+            </div>
+
+            <div className="mt-6">
+                <Card className="shadow-sm border-slate-200">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg text-slate-800">Critical Low Stock Items</CardTitle>
+                            <p className="text-sm text-slate-500">Products with less than 10 items in stock</p>
+                        </div>
+                        <AlertTriangle className="h-5 w-5 text-rose-500" />
+                    </CardHeader>
+                    <CardContent>
+                        {stats.lowStockDetails && stats.lowStockDetails.length > 0 ? (
+                            <div className="rounded-md border max-h-[200px] overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Product (SKU)</TableHead>
+                                            <TableHead>Warehouse</TableHead>
+                                            <TableHead className="text-right">Current Stock</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {stats.lowStockDetails.map((stock: any) => (
+                                            <TableRow key={`${stock.productId}-${stock.warehouseId}`}>
+                                                <TableCell className="font-medium">
+                                                    {stock.product.name}
+                                                    <span className="ml-2 text-xs text-slate-400">({stock.product.sku})</span>
+                                                </TableCell>
+                                                <TableCell>{stock.warehouse.name}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${stock.stockQuantity === 0
+                                                            ? 'bg-rose-100 text-rose-800'
+                                                            : 'bg-amber-100 text-amber-800'
+                                                        }`}>
+                                                        {stock.stockQuantity} pcs
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <Package className="h-10 w-10 text-emerald-200 mb-2" />
+                                <p className="text-sm font-medium text-slate-600">All inventory levels are healthy</p>
+                                <p className="text-xs text-slate-400">No products are currently running low on stock.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
         </div>

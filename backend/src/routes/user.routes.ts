@@ -1,9 +1,13 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
+import { AdminUpdateUserBodySchema, IdentifierParamSchema } from "../types";
 
 export default async function userRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate);
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
+
+    typedApp.addHook('onRequest', app.authenticate);
 
     const requireAdmin = async (request: FastifyRequest) => {
         if (request.user.role !== 'ADMIN') {
@@ -11,7 +15,13 @@ export default async function userRoutes(app: FastifyInstance) {
         }
     };
 
-    app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
+    typedApp.get('/', {
+        schema: {
+            description: '',
+            tags: ['Users'],
+            security: [{ bearerAuth: [] }]
+        },
+    }, async (request: FastifyRequest, reply: FastifyReply) => {
         await requireAdmin(request);
 
         const users = await prisma.user.findMany({
@@ -29,10 +39,15 @@ export default async function userRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: users });
     });
 
-    app.patch('/:id', async (
-        request: FastifyRequest<{ Params: { id: string }, Body: { role?: any, active?: boolean } }>, 
-        reply: FastifyReply
-    ) => {
+    typedApp.patch('/:id', {
+        schema: {
+            description: 'Update',
+            tags: ['Users'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema,
+            body: AdminUpdateUserBodySchema
+        },
+    }, async (request, reply) => {
         await requireAdmin(request);
         const { id } = request.params;
         const { role, active } = request.body;

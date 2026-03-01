@@ -2,8 +2,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import SortableTableHead from '@/components/SortableTableHead';
-import { ArrowDownRight, ArrowUpRight, RefreshCw } from 'lucide-react';
 import type { DataTableProps, Movement } from '@/types';
+import { MOVEMENT_UI_CONFIG } from '@/lib/movement-ui';
 
 export default function MovementTable({
     items,
@@ -97,21 +97,17 @@ export default function MovementTable({
                 {items?.map((movement) => (
                     <TableRow key={movement.id} className="hover:bg-slate-50">
                         <TableCell>
-                            {movement.movementType === 'IN' && (
-                                <div className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                    <ArrowDownRight className="h-8 w-5" /> IN
-                                </div>
-                            )}
-                            {movement.movementType === 'OUT' && (
-                                <div className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                    <ArrowUpRight className="h-8 w-5" /> OUT
-                                </div>
-                            )}
-                            {movement.movementType === 'TRANSFER' && (
-                                <div className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-none flex items-center gap-1 w-[85px] justify-center">
-                                    <RefreshCw className="h-8 w-5" /> TRANS
-                                </div>
-                            )}
+                            {(() => {
+                                const config = MOVEMENT_UI_CONFIG[movement.movementType] || MOVEMENT_UI_CONFIG.DEFAULT;
+                                const Icon = config.icon;
+
+                                return (
+                                    <div className={`${config.badgeBg} ${config.badgeText} hover:${config.badgeBg} border-none flex items-center gap-1 w-[85px] justify-center rounded-md px-2 py-1`}>
+                                        <Icon className="h-6 w-5" />
+                                        <span className="text-xs font-bold">{config.shortLabel}</span>
+                                    </div>
+                                );
+                            })()}
                         </TableCell>
                         <TableCell>
                             <div className="font-semibold text-slate-900">{movement.product?.name}</div>

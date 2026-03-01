@@ -1,12 +1,23 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
-import { CreateMovementBody, MovementsQueryParams } from "../types";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
+import { CreateMovementBodySchema, MovementsQueryParamsSchema } from "../types";
+import { MovementType } from "@prisma/client";
 
 export default async function movementRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate);
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-    app.get('/', async (request: FastifyRequest<MovementsQueryParams>, reply: FastifyReply) => {
+    typedApp.addHook('onRequest', app.authenticate);
+
+    typedApp.get('/', {
+        schema: {
+            description: '',
+            tags: ['Movements'],
+            security: [{ bearerAuth: [] }],
+            querystring: MovementsQueryParamsSchema
+        },
+    }, async (request, reply) => {
         const page = Number(request.query.page) || 1;
         const limit = Number(request.query.limit) || 10;
 
@@ -118,7 +129,26 @@ export default async function movementRoutes(app: FastifyInstance) {
         });
     });
 
-    app.post('/', async (request: FastifyRequest<{ Body: CreateMovementBody }>, reply: FastifyReply) => {
+    typedApp.get('/types', {
+        schema: {
+            description: 'Retrieve available movement types for the frontend',
+            tags: ['Movements'],
+            security: [{ bearerAuth: [] }]
+        }
+    }, async (request, reply) => {
+        const types = Object.values(MovementType);
+
+        return reply.send({ success: true, data: types });
+    });
+
+    typedApp.post('/', {
+        schema: {
+            description: 'Create Movement',
+            tags: ['Movements'],
+            security: [{ bearerAuth: [] }],
+            body: CreateMovementBodySchema,
+        },
+    }, async (request, reply) => {
         if (request.user.role === 'VIEWER') {
             throw new AppError('Forbidden: Insufficient permissions.', 403);
         }

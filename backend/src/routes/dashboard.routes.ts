@@ -1,11 +1,19 @@
-// backend/src/routes/dashboard.routes.ts
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import prisma from "../lib/prisma";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
 
 export default async function dashboardRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate);
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-    app.get('/stats', async (request: FastifyRequest, reply: FastifyReply) => {
+    typedApp.addHook('onRequest', app.authenticate);
+
+    typedApp.get('/stats', {
+        schema: {
+            description: 'Retrieve dashboard statistics',
+            tags: ['Dashboard'],
+            security: [{ bearerAuth: [] }]
+        },
+    }, async (request, reply) => {
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -19,7 +27,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             lowStockItems,
             todayMovementsCount,
             recentMovements,
-            movementsLast7Days
+            movementsLast7Days,
+            lowStockDetails
         ] = await Promise.all([
             prisma.product.count({
                 where: { deletedAt: null }
@@ -51,6 +60,20 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             prisma.stockMovement.findMany({
                 where: { createdAt: { gte: sevenDaysAgo } },
                 select: { createdAt: true, movementType: true, stockQuantity: true }
+            }),
+
+            prisma.stock.findMany({
+                where: {
+                    stockQuantity: { lt: 10 },
+                    product: { deletedAt: null },
+                    warehouse: { deletedAt: null }
+                },
+                take: 10,
+                orderBy: { stockQuantity: 'asc' },
+                include: {
+                    product: { select: { name: true, sku: true } },
+                    warehouse: { select: { name: true } }
+                }
             })
         ]);
 
@@ -82,7 +105,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
                 lowStockItems,
                 todayMovementsCount,
                 chartData,
-                recentMovements
+                recentMovements,
+                lowStockDetails
             }
         });
     });

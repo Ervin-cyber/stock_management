@@ -28,14 +28,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             todayMovementsCount,
             recentMovements,
             movementsLast7Days,
-            lowStockDetails
+            lowStockDetails,
+            topMovements
         ] = await Promise.all([
-            prisma.product.count({
-                where: { deletedAt: null }
-            }),
-            prisma.warehouse.count({
-                where: { deletedAt: null }
-            }),
+            prisma.product.count({ where: { deletedAt: null } }),
+            prisma.warehouse.count({ where: { deletedAt: null } }),
             prisma.stock.count({
                 where: {
                     stockQuantity: { lt: 10 },
@@ -46,7 +43,6 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             prisma.stockMovement.count({
                 where: { createdAt: { gte: todayStart } }
             }),
-
             prisma.stockMovement.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -56,12 +52,10 @@ export default async function dashboardRoutes(app: FastifyInstance) {
                     destinationWarehouse: { select: { name: true } }
                 }
             }),
-
             prisma.stockMovement.findMany({
                 where: { createdAt: { gte: sevenDaysAgo } },
                 select: { createdAt: true, movementType: true, stockQuantity: true }
             }),
-
             prisma.stock.findMany({
                 where: {
                     stockQuantity: { lt: 10 },
@@ -74,8 +68,31 @@ export default async function dashboardRoutes(app: FastifyInstance) {
                     product: { select: { name: true, sku: true } },
                     warehouse: { select: { name: true } }
                 }
+            }),
+
+            prisma.stockMovement.groupBy({
+                by: ['productId'],
+                _sum: { stockQuantity: true },
+                orderBy: { _sum: { stockQuantity: 'desc' } },
+                take: 5
             })
         ]);
+
+        const productIds = topMovements.map(m => m.productId);
+        const productsForTop = await prisma.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, name: true, sku: true }
+        });
+
+        const topMovedProducts = topMovements.map(mov => {
+            const prod = productsForTop.find(p => p.id === mov.productId);
+            return {
+                productId: mov.productId,
+                productName: prod?.name || 'Unknown Product',
+                productSku: prod?.sku || 'Unknown SKU',
+                totalQuantity: mov._sum.stockQuantity || 0
+            };
+        });
 
         const chartDataMap = new Map();
 
@@ -83,7 +100,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = d.toLocaleDateString('ro-RO', { month: 'short', day: 'numeric' });
-            chartDataMap.set(dateStr, { name: dateStr, IN: 0, OUT: 0 });
+            chartDataMap.set(dateStr, { name: dateStr, IN: 0, OUT: 0, TRANSFER: 0 }); 
         }
 
         movementsLast7Days.forEach(mov => {
@@ -92,6 +109,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
                 const current = chartDataMap.get(dateStr);
                 if (mov.movementType === 'IN') current.IN += mov.stockQuantity;
                 if (mov.movementType === 'OUT') current.OUT += mov.stockQuantity;
+                if (mov.movementType === 'TRANSFER') current.TRANSFER += mov.stockQuantity; 
             }
         });
 
@@ -106,7 +124,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
                 todayMovementsCount,
                 chartData,
                 recentMovements,
-                lowStockDetails
+                lowStockDetails,
+                topMovedProducts
             }
         });
     });

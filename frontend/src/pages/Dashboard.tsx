@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Building2, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw, Activity } from 'lucide-react';
+import { Package, Building2, AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw, Activity, TrendingUp } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatDateTime, formatNumber } from '@/utils/formatter';
 import { useDashboard } from '@/hooks/useDashboard';;
@@ -91,6 +91,7 @@ export default function Dashboard() {
                                     <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px' }} />
                                     <Bar dataKey="IN" name="IN (pcs)" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
                                     <Bar dataKey="OUT" name="OUT (pcs)" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
+                                    <Bar dataKey="TRANSFER" name="TRANSFER (pcs)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -128,7 +129,7 @@ export default function Dashboard() {
 
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="shadow-sm border-slate-200">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -158,8 +159,8 @@ export default function Dashboard() {
                                                 <TableCell>{stock.warehouse.name}</TableCell>
                                                 <TableCell className="text-right">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${stock.stockQuantity === 0
-                                                            ? 'bg-rose-100 text-rose-800'
-                                                            : 'bg-amber-100 text-amber-800'
+                                                        ? 'bg-rose-100 text-rose-800'
+                                                        : 'bg-amber-100 text-amber-800'
                                                         }`}>
                                                         {stock.stockQuantity} pcs
                                                     </span>
@@ -174,6 +175,51 @@ export default function Dashboard() {
                                 <Package className="h-10 w-10 text-emerald-200 mb-2" />
                                 <p className="text-sm font-medium text-slate-600">All inventory levels are healthy</p>
                                 <p className="text-xs text-slate-400">No products are currently running low on stock.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-slate-200">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg text-slate-800">Top Moved Products</CardTitle>
+                            <p className="text-sm text-slate-500">Most active items (IN, OUT, TRANSFER)</p>
+                        </div>
+                        <TrendingUp className="h-5 w-5 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                        {stats.topMovedProducts && stats.topMovedProducts.length > 0 ? (
+                            <div className="rounded-md border max-h-[200px] overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Product (SKU)</TableHead>
+                                            <TableHead className="text-right">Total Movements</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {stats.topMovedProducts.map((item: any) => (
+                                            <TableRow key={item.productId}>
+                                                <TableCell className="font-medium">
+                                                    {item.productName}
+                                                    <span className="ml-2 text-xs text-slate-400">({item.productSku})</span>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                                                        {item.totalQuantity} pcs
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <Activity className="h-10 w-10 text-slate-200 mb-2" />
+                                <p className="text-sm font-medium text-slate-600">No movement data yet</p>
+                                <p className="text-xs text-slate-400">Record some IN/OUT transactions to see trends.</p>
                             </div>
                         )}
                     </CardContent>

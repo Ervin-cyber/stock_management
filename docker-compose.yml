@@ -3,7 +3,7 @@ services:
   #  postgres: #i will use my neon  pg db
   #    image: postgres:15-alpine
   #    container_name: stock-management-db
-  #    restart: always
+  #    restart: unless-stopped
   #    env_file:
   #      - ./backend/.env
   #    ports:
@@ -39,11 +39,17 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
     container_name: stock-frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
       - backend
+  
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stock-cloudflare-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
 
 volumes:
   pgdata:

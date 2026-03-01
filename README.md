@@ -35,6 +35,11 @@ StockFlow is a modern, full-stack inventory and warehouse management system desi
 * **Raspberry Pi 4 (ARM64):** Self-hosted production environment.
 * **Cloudflare Tunnel (Zero Trust):** Securely exposing local services to the internet (`papstack.net`) without opening router ports or exposing public IPs.
 
+## 🗄️ Database Schema (ERD)
+The application uses a robust relational database model. Below is the Entity-Relationship Diagram representing the core architecture:
+
+![Database Schema](./frontend/assets/stock_management_schema.png)
+
 ## 🚀 Getting Started (Local Development)
 
 Follow these steps to set up the project locally on your machine.

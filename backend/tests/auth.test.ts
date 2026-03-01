@@ -20,20 +20,20 @@ describe('Authentication and Basic api test', () => {
         expect(json.timestamp).toBeDefined();
     });
 
-    it('POST /api/auth/login - Empty request needs to be rejected', async () => {
+    it('POST /api/v1/auth/login - Empty request needs to be rejected', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: {}
         });
 
         expect(response.statusCode).toBe(400); // Bad Request
     });
 
-    it('POST /api/auth/login - Login successful with admin', async () => {
+    it('POST /api/v1/auth/login - Login successful with admin', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/auth/login',
+            url: '/api/v1/auth/login',
             payload: {
                 email: 'admin@mail.com',
                 password: 'adminpassword123'

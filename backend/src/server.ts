@@ -7,16 +7,50 @@ import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
 import warehouseRoutes from './routes/warehouses.routes';
 import productRoutes from './routes/products.routes';
-
 import cors from '@fastify/cors';
 import dashboardRoutes from './routes/dashboard.routes';
 import movementRoutes from './routes/movements.routes';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { AppError } from './utils/AppError';
+import userRoutes from './routes/user.routes';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 export const app = Fastify({ logger: process.env.APP_LOGGER_ENABLED === 'true' });
 
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
 const FRONTEND_URL = process.env.FRONTEND_URL || (() => { throw new Error('FRONTEND_URL is not set!') })()
+
+app.register(swagger, {
+    openapi: {
+        info: {
+            title: 'StockFlow API',
+            description: 'Advanced Warehouse Management System API Documentation',
+            version: '1.0.0',
+        },
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
+    },
+    transform: jsonSchemaTransform,
+});
+
+app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+        docExpansion: 'list',
+        deepLinking: false,
+    },
+});
 
 app.register(fastifyRateLimit, {
     max: 100,
@@ -36,10 +70,12 @@ app.register(authPlugin);
 app.register(errorHandler)
 
 app.register(authRoutes, { prefix: '/api/auth' });
+app.register(userRoutes, { prefix: '/api/users' });
 app.register(productRoutes, { prefix: '/api/products' });
 app.register(warehouseRoutes, { prefix: '/api/warehouses' });
 app.register(movementRoutes, { prefix: '/api/movements' });
 app.register(dashboardRoutes, { prefix: '/api/dashboard' });
+
 
 app.get('/health', async (request, reply) => {
     reply.send({ status: 'ok', timestamp: new Date().toISOString() })

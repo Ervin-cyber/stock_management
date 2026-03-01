@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
 
 const loginSchema = z.object({
@@ -35,10 +35,10 @@ export default function Login() {
         try {
             setServerError(null);
             const response = await api.post('/auth/login', data);
-            
+
             const { token, user } = response.data;
             setAuth(token, user);
-            
+
             navigate('/');
         } catch (error: any) {
             const errorMessage = error.response?.data?.error?.message || "Unexpected server error occurred.";
@@ -50,7 +50,7 @@ export default function Login() {
         <div className="flex h-screen w-full items-center justify-center bg-slate-50">
             <Card className="w-100 shadow-lg">
                 <CardHeader className="space-y-1 text-center">
-                    <Logo/>
+                    <Logo />
                     <CardDescription>
                         Log in to the warehouse management system
                     </CardDescription>
@@ -58,7 +58,7 @@ export default function Login() {
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            
+
                             <FormField
                                 control={form.control}
                                 name="email"
@@ -92,15 +92,21 @@ export default function Login() {
                                 </div>
                             )}
 
-                            <Button 
-                                type="submit" 
-                                className="w-full" 
+                            <Button
+                                type="submit"
+                                className="w-full"
                                 disabled={form.formState.isSubmitting}
                             >
                                 {form.formState.isSubmitting ? "Please wait..." : "Sign in"}
                             </Button>
                         </form>
                     </Form>
+                    <div className="text-center text-sm text-slate-600 mt-4">
+                        Don't have an account yet?{' '}
+                        <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500">
+                            Register here!
+                        </Link>
+                    </div>
                 </CardContent>
             </Card>
         </div>

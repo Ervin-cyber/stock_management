@@ -1,12 +1,22 @@
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import prisma from "../lib/prisma";
-import { FetchQueryParams, IdentifierParam, UpsertWarehouseBody } from "../types";
 import { AppError } from "../utils/AppError";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
+import { FetchQueryParamsSchema, IdentifierParamSchema, UpsertWarehouseBodySchema } from "../types";
 
 export default async function warehouseRoutes(app: FastifyInstance) {
-    app.addHook('onRequest', app.authenticate);
+    const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-    app.get('/', async (request: FastifyRequest<FetchQueryParams>, reply) => {
+    typedApp.addHook('onRequest', app.authenticate);
+
+    typedApp.get('/', {
+        schema: {
+            description: '',
+            tags: ['Warehouses'],
+            security: [{ bearerAuth: [] }],
+            querystring: FetchQueryParamsSchema
+        },
+    }, async (request, reply) => {
         const isAll = request.query.all === 'true';
 
         const page = Number(request.query.page) || 1;
@@ -54,12 +64,19 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         });
     });
 
-    app.post('/', async (request: FastifyRequest<{ Body: UpsertWarehouseBody }>, reply) => {
+    typedApp.post('/', {
+        schema: {
+            description: 'Insert',
+            tags: ['Warehouses'],
+            security: [{ bearerAuth: [] }],
+            body: UpsertWarehouseBodySchema
+        },
+    }, async (request, reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required to create a warehouse.', 403);
         }
 
-        const { name, location } = request.body ?? {};
+        const { name, location, active } = request.body ?? {};
         const userId = request.user.id;
 
         if (!name) {
@@ -84,8 +101,16 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         return reply.status(201).send({ success: true, data: newWarehouse });
     });
 
-    app.put('/:id', async (
-        request: FastifyRequest<{ Params: IdentifierParam; Body: UpsertWarehouseBody }>,
+    typedApp.put('/:id', {
+        schema: {
+            description: 'Update',
+            tags: ['Warehouses'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema,
+            body: UpsertWarehouseBodySchema
+        },
+    }, async (
+        request,
         reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required to update a warehouse.', 403);
@@ -120,8 +145,15 @@ export default async function warehouseRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: updatedWarehouse });
     });
 
-    app.delete('/:id', async (
-        request: FastifyRequest<{ Params: IdentifierParam }>,
+    typedApp.delete('/:id', {
+        schema: {
+            description: 'Delete',
+            tags: ['Warehouses'],
+            security: [{ bearerAuth: [] }],
+            params: IdentifierParamSchema,
+        },
+    }, async (
+        request,
         reply) => {
         if (request.user.role !== 'ADMIN') {
             throw new AppError('Forbidden: Admin access required to delete a warehouse.', 403);

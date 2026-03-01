@@ -108,7 +108,7 @@ describe('Product CRUD API', () => {
             method: 'PUT',
             url: `/api/products/${testProductId}`,
             headers: { authorization: `Bearer ${adminToken}` },
-            payload: { name: 'Asus Rog Gaming Laptop' }
+            payload: { sku: uniqueSku, name: 'Asus Rog Gaming Laptop',  }
         });
         
         expect(response.statusCode).toBe(200);

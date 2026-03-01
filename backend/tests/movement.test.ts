@@ -22,7 +22,8 @@ describe('Stock & Movements API', () => {
                 email: `manager_${uniqueSuffix}@mail.com`,
                 name: 'Stock Manager',
                 password: hashedManagerPassword,
-                role: 'MANAGER'
+                role: 'MANAGER',
+                active: true
             }
         });
         managerId = managerUser.id;
@@ -40,7 +41,8 @@ describe('Stock & Movements API', () => {
                 email: `stockuser_${uniqueSuffix}@mail.com`,
                 name: 'Stock Tester User',
                 password: hashedViewerPassword,
-                role: 'VIEWER'
+                role: 'VIEWER',
+                active: true
             }
         });
         viewerUserId = viewerUser.id;

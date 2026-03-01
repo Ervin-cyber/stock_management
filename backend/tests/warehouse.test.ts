@@ -29,7 +29,8 @@ describe('Warehouse CRUD API', () => {
                 email: viewerUserEmail,
                 name: 'Test viewer',
                 password: hashedPassword,
-                role: 'VIEWER'
+                role: 'VIEWER',
+                active: true
             }
         });
         viewerUserId = viewerUser.id;
@@ -137,7 +138,7 @@ describe('Warehouse CRUD API', () => {
             method: 'PUT',
             url: `/api/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${adminToken}` },
-            payload: { location: 'Targu-Mures' }
+            payload: { name: uniqueWarehouseName, location: 'Targu-Mures' }
         });
         
         expect(response.statusCode).toBe(200);

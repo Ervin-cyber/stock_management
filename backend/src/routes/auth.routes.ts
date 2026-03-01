@@ -2,10 +2,11 @@ import { FastifyInstance } from "fastify";
 import bcrypt from 'bcrypt';
 import prisma from "../lib/prisma";
 import { AppError } from "../utils/AppError";
-import { sendVerificationEmail } from "../utils/mailer";
+import { sendResetPasswordEmail, sendVerificationEmail } from "../utils/mailer";
 import crypto from 'crypto';
 import { LoginBodySchema, RegisterBodySchema, VerifyEmailBodySchema } from "../types";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
+import z from "zod";
 
 export default async function authRoutes(app: FastifyInstance) {
     const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -164,5 +165,52 @@ export default async function authRoutes(app: FastifyInstance) {
             success: true,
             message: 'Your account has been successfully activated! You can now log in.'
         });
+    });
+
+    typedApp.post('/forgot-password', {
+        schema: {
+            body: z.object({ email: z.string().email() })
+        }
+    }, async (request, reply) => {
+        const { email } = request.body;
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return reply.send({ success: true, message: "If the email exists, a reset link was sent." });
+        }
+
+        const resetToken = app.jwt.sign({ id: user.id, purpose: 'reset_password' } as any, { expiresIn: '15m' });
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+        sendResetPasswordEmail(user.email, user.name, resetLink).catch(console.error);
+
+        return reply.send({ success: true, message: "If the email exists, a reset link was sent." });
+    });
+
+    typedApp.post('/reset-password', {
+        schema: {
+            body: z.object({
+                token: z.string(),
+                newPassword: z.string().min(6)
+            })
+        }
+    }, async (request, reply) => {
+        try {
+            const { token, newPassword } = request.body;
+
+            const decoded = app.jwt.verify<{ id: string, purpose: string }>(token);
+
+            if (decoded.purpose !== 'reset_password') throw new Error();
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await prisma.user.update({
+                where: { id: decoded.id },
+                data: { password: hashedPassword }
+            });
+
+            return reply.send({ success: true, message: "Password updated successfully!" });
+        } catch (error) {
+            return reply.status(400).send({ success: false, message: "Invalid or expired token." });
+        }
     });
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { LayoutDashboard, Package, Building2, ArrowRightLeft, LogOut, Menu, X, Users } from 'lucide-react';
+import { LayoutDashboard, Package, Building2, ArrowRightLeft, LogOut, Menu, X, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 
@@ -64,8 +64,8 @@ export default function DashboardLayout() {
                     </button>
                 )}
 
+                {/* Main Navigation */}
                 <nav className="flex flex-col flex-1 px-4 space-y-2 mt-1 md:mt-0 overflow-y-auto md:pt-4 pb-4">
-
                     <div className="space-y-2">
                         {navItems.map((item) => {
                             const Icon = item.icon;
@@ -88,37 +88,66 @@ export default function DashboardLayout() {
                         })}
                     </div>
 
+                    {/* Admin Only Menus */}
                     {user?.role === 'ADMIN' && (
+                        <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
+                            <span className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administration</span>
+                            <NavLink
+                                key={'/users'}
+                                to={'/users'}
+                                onClick={closeSidebar}
+                                className={({ isActive }) =>
+                                    `flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${isActive
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'hover:bg-slate-800 hover:text-white'
+                                    }`
+                                }
+                            >
+                                <Users className="h-5 w-5" />
+                                <span className="font-medium">User Management</span>
+                            </NavLink>
+                        </div>
+                    )}
+
+                    {/* Personal Settings Menu */}
+                    <div className="mt-4 pt-4 border-t border-slate-800 space-y-2 mb-auto">
+                        <span className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</span>
                         <NavLink
-                            key={'/users'}
-                            to={'/users'}
+                            key={'/profile'}
+                            to={'/profile'}
                             onClick={closeSidebar}
                             className={({ isActive }) =>
-                                `mt-auto flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${isActive
+                                `flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${isActive
                                     ? 'bg-blue-600 text-white shadow-md'
                                     : 'hover:bg-slate-800 hover:text-white'
                                 }`
                             }
                         >
-                            <Users className="h-5 w-5" />
-                            <span className="font-medium">User Management</span>
+                            <Settings className="h-5 w-5" />
+                            <span className="font-medium">Profile Settings</span>
                         </NavLink>
-                    )}
+                    </div>
                 </nav>
 
                 {/* Footer (User Info & Logout) */}
-                <div className="p-4 border-t border-slate-800 bg-slate-950">
-                    <div className="flex flex-col mb-4 px-2">
-                        <span className="text-sm font-semibold text-white">{user?.name}</span>
-                        <span className="text-xs text-slate-500">{user?.role}</span>
+                <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex flex-col gap-3">
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
+                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-semibold text-white truncate">{user?.name}</span>
+                            <span className="text-xs text-slate-400 truncate">{user?.role}</span>
+                        </div>
                     </div>
+
                     <Button
                         variant="destructive"
-                        className="w-full justify-start hover:bg-red-600"
+                        className="w-full justify-start hover:bg-rose-600 bg-rose-500/10 text-rose-500 border border-rose-500/20 mt-2 transition-colors"
                         onClick={handleLogout}
                     >
                         <LogOut className="h-4 w-4 mr-2" />
-                        Logout
+                        Log out
                     </Button>
                 </div>
             </aside>

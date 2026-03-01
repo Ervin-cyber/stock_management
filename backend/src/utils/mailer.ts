@@ -39,3 +39,33 @@ export const sendVerificationEmail = async (toEmail: string, token: string) => {
         throw new Error('The confirmation email could not be sent.');
     }
 };
+
+export const sendResetPasswordEmail = async (toEmail: string, userName: string | null, resetLink: string) => {
+
+    const mailOptions = {
+        from: `"Stock Management System" <${process.env.SMTP_EMAIL}>`,
+        to: toEmail,
+        subject: 'Reset password - Stock Management',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #0f172a;">Welcome back ${userName}!</h2>
+                <p style="color: #334155; font-size: 16px;">Please click the button below to reset your password.:</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+                </div>
+                
+                <p style="color: #64748b; font-size: 14px;">Or copy this link into your browser:</p>
+                <p style="color: #2563eb; font-size: 14px; word-break: break-all;">${resetLink}</p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✉️ Email successfully sent to the following address: ${toEmail}`);
+    } catch (error) {
+        console.error('❌ Error sending email:', error);
+        throw new Error('The password reset email could not be sent.');
+    }
+};

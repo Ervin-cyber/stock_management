@@ -12,6 +12,9 @@ import UsersPage from './pages/UsersPage'
 import AdminGuard from './components/AdminGuard'
 import VerifyEmail from './pages/VerifyEmail'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Profile from './pages/Profile'
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route element={<AuthGuard />}>
             <Route element={<DashboardLayout />}>
@@ -30,6 +35,7 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/warehouses" element={<Warehouses />} />
               <Route path="/movements" element={<Movements />} />
+              <Route path="/profile" element={<Profile />} />
               <Route element={<AdminGuard />}>
                 <Route path="/users" element={<UsersPage />} />
               </Route>

@@ -9,3 +9,8 @@ export const updateUser = async (id: string, data: { role?: string; active?: boo
     const response = await api.patch(`/users/${id}`, data);
     return response.data.data;
 };
+
+export const updateProfile = async (data: { name: string }) => {
+    const response = await api.put('/users/profile', data);
+    return response.data;
+};

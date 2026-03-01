@@ -123,6 +123,12 @@ export default function Login() {
                         </form>
                     </Form>
                     <div className="text-center text-sm text-slate-600 mt-4">
+                        Forgot password?{' '}
+                        <Link to="/forgot-password" className="font-semibold text-blue-600 hover:text-blue-500">
+                            Reset here!
+                        </Link>
+                    </div>
+                    <div className="text-center text-sm text-slate-600 mt-4">
                         Don't have an account yet?{' '}
                         <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500">
                             Register here!

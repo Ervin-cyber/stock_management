@@ -27,7 +27,7 @@ export default async function authRoutes(app: FastifyInstance) {
 
         const user = await prisma.user.findUnique({
             where: {
-                email: email
+                email: email.toLowerCase()
             }
         });
 

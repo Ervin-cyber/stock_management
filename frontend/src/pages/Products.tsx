@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, Plus, Search } from 'lucide-react';
+import { Package, Plus, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useProductMutations, useProducts } from '@/hooks/useProducts';
@@ -104,6 +104,15 @@ export default function Products() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
                 />
+                {setSearchTerm && (
+                    <button
+                        type="button"
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
             </div>
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <ProductTable

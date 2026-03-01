@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
+import { Eye, EyeOff } from 'lucide-react';
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address format." }),
@@ -21,6 +22,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function Login() {
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
+
+    const [showPassword, setShowPassword] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
 
     const form = useForm<LoginFormValues>({
@@ -80,7 +83,25 @@ export default function Login() {
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
                                         <FormControl>
-                                            <Input type="password" placeholder="••••••••" {...field} />
+                                            <div className="relative">
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    {...field}
+                                                    className="pr-10"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

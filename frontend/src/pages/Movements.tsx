@@ -130,8 +130,18 @@ export default function Movements() {
                                 placeholder="Search by Movement reference, Product name or SKU..."
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
-                                className="pl-9 bg-white"
+                                className="pl-9 pr-9 bg-white"
                             />
+
+                            {productSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setProductSearch('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex gap-2 w-full sm:w-auto">

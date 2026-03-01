@@ -8,8 +8,8 @@ describe('Warehouse CRUD API', () => {
     let viewerToken = '';
     let testWarehouseId = '';
     let viewerUserId = '';
-    
-    const uniqueWarehouseName = `Test Warehouse ${Date.now()}`; 
+
+    const uniqueWarehouseName = `Test Warehouse ${Date.now()}`;
     const viewerUserEmail = `viewer_user_${Date.now()}@mail.com`;
 
     beforeAll(async () => {
@@ -51,7 +51,7 @@ describe('Warehouse CRUD API', () => {
             try {
                 await prisma.warehouse.delete({ where: { id: testWarehouseId } });
             } catch (error) {
-                
+
             }
         }
 
@@ -100,12 +100,12 @@ describe('Warehouse CRUD API', () => {
                 location: 'Bucharest'
             }
         });
-        
+
         expect(response.statusCode).toBe(201);
         const json = response.json();
         expect(json.success).toBe(true);
         expect(json.data.name).toBe(uniqueWarehouseName);
-        
+
         testWarehouseId = json.data.id;
     });
 
@@ -119,7 +119,7 @@ describe('Warehouse CRUD API', () => {
                 location: 'Cluj Napoca'
             }
         });
-        
+
         expect(response.statusCode).toBe(409);
     });
 
@@ -128,7 +128,7 @@ describe('Warehouse CRUD API', () => {
             method: 'PUT',
             url: `/api/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${viewerToken}` },
-            payload: { location: 'Bucharest' }
+            payload: { name: uniqueWarehouseName, location: 'Bucharest' }
         });
         expect(response.statusCode).toBe(403);
     });
@@ -140,7 +140,7 @@ describe('Warehouse CRUD API', () => {
             headers: { authorization: `Bearer ${adminToken}` },
             payload: { name: uniqueWarehouseName, location: 'Targu-Mures' }
         });
-        
+
         expect(response.statusCode).toBe(200);
         expect(response.json().data.location).toBe('Targu-Mures');
     });
@@ -160,12 +160,15 @@ describe('Warehouse CRUD API', () => {
             url: `/api/warehouses/${testWarehouseId}`,
             headers: { authorization: `Bearer ${adminToken}` }
         });
-        
+
         expect(response.statusCode).toBe(200);
 
         const deletedWarehouse = await prisma.warehouse.findUnique({
             where: { id: testWarehouseId }
         });
-        expect(deletedWarehouse).toBeNull();
+
+        expect(deletedWarehouse).not.toBeNull();
+        expect(deletedWarehouse?.deletedAt).not.toBeNull();
+        expect(deletedWarehouse?.active).toBe(false);
     });
 });

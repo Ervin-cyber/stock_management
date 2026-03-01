@@ -127,7 +127,7 @@ describe('Stock & Movements API', () => {
         });
 
         expect(response.statusCode).toBe(400);
-        expect(response.json().error).toContain('Insufficient stock');
+        expect(response.json().error?.message).toContain('Insufficient stock');
     });
 
     it('POST /api/movements - TRANSFER: Should successfully transfer goods (201)', async () => {

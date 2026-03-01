@@ -37,16 +37,6 @@ export const UpsertWarehouseBodySchema = z.object({
     active: z.boolean().optional(),
 });
 
-export const CreateMovementBodySchema = z.object({
-    productId: z.string().uuid("Invalid product ID"),
-    movementType: ZodMovementType,
-    stockQuantity: z.number().int().positive("Quantity must be greater than 0"),
-    sourceWarehouseId: z.string().uuid().optional(),
-    destinationWarehouseId: z.string().uuid().optional(),
-    description: z.string().optional(),
-    reference: z.string().optional(),
-});
-
 export const IdentifierParamSchema = z.object({
     id: z.string().uuid("Invalid UUID format"),
 });
@@ -60,12 +50,22 @@ export const FetchQueryParamsSchema = z.object({
     sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
+export const CreateMovementBodySchema = z.object({
+    productId: z.string().uuid("Invalid product ID"),
+    movementType: ZodMovementType,
+    stockQuantity: z.number().int().positive("Quantity must be greater than 0"),
+    sourceWarehouseId: z.string().uuid().nullish(),
+    destinationWarehouseId: z.string().uuid().nullish(),
+    description: z.string().optional(),
+    reference: z.string().optional(),
+});
+
 export const MovementsQueryParamsSchema = z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
     type: z.union([ZodMovementType, z.literal('ALL')]).optional(),
-    sourceWarehouseId: z.string().uuid().optional(),
-    destinationWarehouseId: z.string().uuid().optional(),
+    sourceWarehouseId: z.string().uuid().nullish(),
+    destinationWarehouseId: z.string().uuid().nullish(),
     search: z.string().optional(),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),

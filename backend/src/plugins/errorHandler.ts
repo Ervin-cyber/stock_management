@@ -22,7 +22,7 @@ export default fp(async (app: FastifyInstance) => {
             return reply.status(400).send({
                 error: {
                     code: 'VALIDATION_ERROR',
-                    message: 'Hibás bemeneti adatok',
+                    message: 'Incorrect input data',
                     details: error.validation
                 }
             });

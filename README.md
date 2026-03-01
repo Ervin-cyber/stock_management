@@ -46,5 +46,5 @@ Follow these steps to set up the project locally on your machine.
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/yourusername/stock_management.git](https://github.com/yourusername/stock_management.git)
+git clone [https://github.com/Ervin-cyber/stock_management.git](https://github.com/Ervin-cyber/stock_management.git)
 cd stock_management

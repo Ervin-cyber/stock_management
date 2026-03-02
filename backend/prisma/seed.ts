@@ -10,11 +10,17 @@ async function main() {
         console.log("Database already contains data, seeding is skipped.");
         return;
     }
-    
+
     console.log('🌱 Seeding database...');
 
-    const plainPassword = 'adminpassword123';
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const adminPasswordPlain = process.env.ADMIN_PASSWORD;
+    const hashedAdminPassword = await bcrypt.hash(adminPasswordPlain, 10);
+
+    const managerPasswordPlain = process.env.MANAGER_PASSWORD;
+    const hashedManagerPassword = await bcrypt.hash(managerPasswordPlain, 10);
+
+    const viewerPasswordPlain = process.env.VIEWER_PASSWORD;
+    const hashedViewerPassword = await bcrypt.hash(viewerPasswordPlain, 10);
 
     const admin = await prisma.user.upsert({
         where: { email: 'admin@mail.com' },
@@ -22,7 +28,7 @@ async function main() {
         create: {
             email: 'admin@mail.com',
             name: 'Admin',
-            password: hashedPassword,
+            password: hashedAdminPassword,
             role: 'ADMIN',
             active: true
         },
@@ -36,7 +42,7 @@ async function main() {
         create: {
             email: 'istvan@mail.com',
             name: 'Istvan Manager',
-            password: hashedPassword,
+            password: hashedManagerPassword,
             role: 'MANAGER',
             active: true
         },
@@ -50,7 +56,7 @@ async function main() {
         create: {
             email: 'attila@mail.com',
             name: 'Attila Viewer',
-            password: hashedPassword,
+            password: hashedViewerPassword,
             role: 'VIEWER',
             active: true
         },

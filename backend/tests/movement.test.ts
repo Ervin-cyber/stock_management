@@ -16,7 +16,12 @@ describe('Stock & Movements API', () => {
     const uniqueSuffix = Date.now();
 
     beforeAll(async () => {
-        const hashedManagerPassword = await bcrypt.hash('testpassword123', 10);
+        const managerPasswordPlain = process.env.MANAGER_PASSWORD;
+        const hashedManagerPassword = await bcrypt.hash(managerPasswordPlain, 10);
+
+        const viewerPasswordPlain = process.env.VIEWER_PASSWORD;
+        const hashedViewerPassword = await bcrypt.hash(viewerPasswordPlain, 10);
+
         const managerUser = await prisma.user.create({
             data: {
                 email: `manager_${uniqueSuffix}@mail.com`,
@@ -31,11 +36,10 @@ describe('Stock & Movements API', () => {
         const managerLogin = await app.inject({
             method: 'POST',
             url: '/api/v1/auth/login',
-            payload: { email: managerUser.email, password: 'testpassword123' }
+            payload: { email: managerUser.email, password: managerPasswordPlain }
         });
         managerToken = managerLogin.json().token;
 
-        const hashedViewerPassword = await bcrypt.hash('userpassword123', 10);
         const viewerUser = await prisma.user.create({
             data: {
                 email: `stockuser_${uniqueSuffix}@mail.com`,
@@ -50,7 +54,7 @@ describe('Stock & Movements API', () => {
         const userLogin = await app.inject({
             method: 'POST',
             url: '/api/v1/auth/login',
-            payload: { email: viewerUser.email, password: 'userpassword123' }
+            payload: { email: viewerUser.email, password: viewerPasswordPlain }
         });
         userToken = userLogin.json().token;
 

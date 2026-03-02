@@ -12,15 +12,18 @@ describe('Product CRUD API', () => {
     const uniqueSku = `TEST-SKU-${Date.now()}`; 
     const viewerUserEmail = `product_user_${Date.now()}@mail.com`;
 
+    const adminPassword = process.env.ADMIN_PASSWORD || '';
+    const viewerPasswordPlain = process.env.VIEWER_PASSWORD;
+
     beforeAll(async () => {
         const adminLogin = await app.inject({
             method: 'POST',
             url: '/api/v1/auth/login',
-            payload: { email: 'admin@mail.com', password: 'adminpassword123' }
+            payload: { email: 'admin@mail.com', password: adminPassword }
         });
         adminToken = adminLogin.json().token;
 
-        const hashedPassword = await bcrypt.hash('userpassword123', 10);
+        const hashedPassword = await bcrypt.hash(viewerPasswordPlain, 10);
         const viewerUser = await prisma.user.create({
             data: {
                 email: viewerUserEmail,
@@ -35,7 +38,7 @@ describe('Product CRUD API', () => {
         const userLogin = await app.inject({
             method: 'POST',
             url: '/api/v1/auth/login',
-            payload: { email: viewerUserEmail, password: 'userpassword123' }
+            payload: { email: viewerUserEmail, password: viewerPasswordPlain }
         });
         userToken = userLogin.json().token;
     });

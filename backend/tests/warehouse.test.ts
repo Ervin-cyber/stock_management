@@ -11,6 +11,8 @@ describe('Warehouse CRUD API', () => {
 
     const uniqueWarehouseName = `Test Warehouse ${Date.now()}`;
     const viewerUserEmail = `viewer_user_${Date.now()}@mail.com`;
+    const adminPassword = process.env.ADMIN_PASSWORD || '';
+    const viewerPassword = process.env.VIEWER_PASSWORD;
 
     beforeAll(async () => {
         const adminLogin = await app.inject({
@@ -18,12 +20,12 @@ describe('Warehouse CRUD API', () => {
             url: '/api/v1/auth/login',
             payload: {
                 email: 'admin@mail.com',
-                password: 'adminpassword123'
+                password: adminPassword
             }
         });
         adminToken = adminLogin.json().token;
 
-        const hashedPassword = await bcrypt.hash('viewerpassword123', 10);
+        const hashedPassword = await bcrypt.hash(viewerPassword, 10);
         const viewerUser = await prisma.user.create({
             data: {
                 email: viewerUserEmail,
@@ -40,7 +42,7 @@ describe('Warehouse CRUD API', () => {
             url: '/api/v1/auth/login',
             payload: {
                 email: viewerUserEmail,
-                password: 'viewerpassword123'
+                password: viewerPassword
             }
         });
         viewerToken = userLogin.json().token;

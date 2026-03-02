@@ -13,8 +13,9 @@ export default function UsersPage() {
                     Here you can manage the accounts that have access to the system and their permissions.
                 </p>
             </div>
-
-            <UsersTable />
+            <div className="rounded-md border bg-white shadow-sm">
+                <UsersTable />
+            </div>
         </div>
     );
 }

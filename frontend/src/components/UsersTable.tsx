@@ -2,6 +2,7 @@ import { useUsers, useUserMutations } from '../hooks/useUsers';
 import { useAuthStore } from '@/store/authStore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { formatDateTime } from '@/utils/formatter';
 
 export default function UsersTable() {
     const { data: users, isLoading } = useUsers();
@@ -27,6 +28,7 @@ export default function UsersTable() {
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Last active</TableHead>
                         <TableHead>Status</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -41,7 +43,6 @@ export default function UsersTable() {
                                 </TableCell>
                                 <TableCell>{user.email}</TableCell>
 
-
                                 <TableCell>
                                     <select
                                         className="border rounded p-1 text-sm"
@@ -54,6 +55,8 @@ export default function UsersTable() {
                                         <option value="VIEWER">Viewer</option>
                                     </select>
                                 </TableCell>
+
+                                <TableCell>{formatDateTime(user.lastActive)}</TableCell>
 
                                 <TableCell>
                                     <label className="flex items-center space-x-2 cursor-pointer">

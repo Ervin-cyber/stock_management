@@ -46,6 +46,13 @@ export default async function authRoutes(app: FastifyInstance) {
             throw new AppError('Wrong email or password!', 401);
         }
 
+        prisma.user.update({ // update lastLogin
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
+        }).catch((error) => {
+            console.error(`[Non-critical] Failed to update lastLogin for user ${user.id}:`, error.message);
+        });
+
         const token = typedApp.jwt.sign({
             id: user.id,
             email: user.email,
@@ -85,6 +92,13 @@ export default async function authRoutes(app: FastifyInstance) {
         if (!user) {
             throw new AppError('User not found!', 404);
         }
+
+        prisma.user.update({ // update lastActive
+            where: { id: user.id },
+            data: { lastActive: new Date() },
+        }).catch((error) => {
+            console.error(`[Non-critical] Failed to update lastActive for user ${user.id}:`, error.message);
+        });
 
         return reply.send({ success: true, user });
     });

@@ -28,6 +28,8 @@ model User {
   role                    Role      
   active                  Boolean         @default(false)
   verificationToken       String?
+  lastLogin               DateTime?
+  lastActive              DateTime?
 
   // Prisma reverse relationship
   createdProducts         Product[]       @relation("ProductCreatedBy")

@@ -33,6 +33,7 @@ export default async function userRoutes(app: FastifyInstance) {
                 email: true,
                 role: true,
                 active: true,
+                lastActive: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' }

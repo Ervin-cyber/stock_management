@@ -16,10 +16,10 @@ describe('Stock & Movements API', () => {
     const uniqueSuffix = Date.now();
 
     beforeAll(async () => {
-        const managerPasswordPlain = process.env.MANAGER_PASSWORD;
+        const managerPasswordPlain = process.env.MANAGER_PASSWORD || 'password';
         const hashedManagerPassword = await bcrypt.hash(managerPasswordPlain, 10);
 
-        const viewerPasswordPlain = process.env.VIEWER_PASSWORD;
+        const viewerPasswordPlain = process.env.VIEWER_PASSWORD || 'password';
         const hashedViewerPassword = await bcrypt.hash(viewerPasswordPlain, 10);
 
         const managerUser = await prisma.user.create({

@@ -8,7 +8,7 @@ describe('Authentication and Basic api test', () => {
         await prisma.$disconnect();
     });
 
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'password';
 
     it('GET /health - It needs to be successful', async () => {
         const response = await app.inject({

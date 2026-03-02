@@ -11,8 +11,8 @@ describe('Warehouse CRUD API', () => {
 
     const uniqueWarehouseName = `Test Warehouse ${Date.now()}`;
     const viewerUserEmail = `viewer_user_${Date.now()}@mail.com`;
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
-    const viewerPassword = process.env.VIEWER_PASSWORD;
+    const adminPassword = process.env.ADMIN_PASSWORD || 'password';
+    const viewerPassword = process.env.VIEWER_PASSWORD || 'password';
 
     beforeAll(async () => {
         const adminLogin = await app.inject({

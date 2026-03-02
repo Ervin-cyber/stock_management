@@ -12,8 +12,8 @@ describe('Product CRUD API', () => {
     const uniqueSku = `TEST-SKU-${Date.now()}`; 
     const viewerUserEmail = `product_user_${Date.now()}@mail.com`;
 
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
-    const viewerPasswordPlain = process.env.VIEWER_PASSWORD;
+    const adminPassword = process.env.ADMIN_PASSWORD || 'password';
+    const viewerPasswordPlain = process.env.VIEWER_PASSWORD || 'password';
 
     beforeAll(async () => {
         const adminLogin = await app.inject({

@@ -134,7 +134,7 @@ export default async function authRoutes(app: FastifyInstance) {
             }
         });
 
-        sendVerificationEmail(newUser.email, verificationToken).catch(console.error);
+        sendVerificationEmail(newUser.email, newUser.name, verificationToken).catch(console.error);
 
         return reply.status(201).send({
             success: true,

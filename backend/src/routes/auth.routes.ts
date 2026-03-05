@@ -127,7 +127,7 @@ export default async function authRoutes(app: FastifyInstance) {
         const newUser = await prisma.user.create({
             data: {
                 name,
-                email,
+                email: email.toLowerCase(),
                 password: hashedPassword,
                 verificationToken,
                 role: 'VIEWER'
@@ -187,7 +187,7 @@ export default async function authRoutes(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         const { email } = request.body;
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 
         if (!user) {
             return reply.send({ success: true, message: "If the email exists, a reset link was sent." });

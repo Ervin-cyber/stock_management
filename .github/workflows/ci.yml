@@ -49,6 +49,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
           JWT_SECRET: supersecret_test_key
+          FRONTEND_URL: http://localhost:5173
         run: |
           npm ci
           npx prisma db push
@@ -57,6 +58,8 @@ jobs:
 
       - name: Frontend Tests
         working-directory: ./frontend
+        env:
+          VITE_API_URL: http://localhost:3000
         run: |
           npm ci
           # npm run test
